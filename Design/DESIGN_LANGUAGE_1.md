@@ -109,8 +109,6 @@ This single styleguide card covers both color and type. The tables below are the
 
 ![Lobby player counter](assets/ui-lobby-player-counter.png)
 
-![Winner badge](assets/ui-winner-badge.png)
-
 ---
 
 ## 5. Scooter / Vehicle Direction — ✅ Done
