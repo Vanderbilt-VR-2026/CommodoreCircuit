@@ -98,3 +98,7 @@ __MACOSX/
 # "Icon?" above also matches folders named "Icons" (like Assets/TutorialInfo/Icons).
 # This line keeps those folders in Git.
 !Icons/
+
+# Unity-generated debug/backup folders (per-scene name prefix varies)
+*_BurstDebugInformation_DoNotShip/
+*_BackUpThisFolder_ButDontShipItWithYourGame/
