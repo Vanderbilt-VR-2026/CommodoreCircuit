@@ -2149,40 +2149,29 @@ MonoBehaviour:
   rearWheelVisual: {fileID: 799586042}
   frontWheelVisualEulerOffset: {x: 0, y: 0, z: 90}
   rearWheelVisualEulerOffset: {x: 0, y: 0, z: 90}
+  wheelRadius: 0.15
   leftHandAnchor: {fileID: 0}
   rightHandAnchor: {fileID: 0}
-  maxMotorTorque: 900
   maxSpeed: 14
-  maxBrakeTorque: 3500
-  reverseMotorTorque: 200
+  acceleration: 18
+  brakeDeceleration: 28
+  coastDeceleration: 4
   reverseMaxSpeed: 3
+  reverseAcceleration: 8
   brakeToReverseSpeedThreshold: 0.5
-  driftTriggerThreshold: 0.15
-  minDriftSpeed: 2
-  driftSidewaysStiffnessMultiplier: 0.45
-  driftSlideAngle: 25
-  driftSlideHoldStrength: 25
-  driftSlideDamping: 4
-  driftChargeOptimalSteerThreshold: 0.7
-  driftChargeRateOptimal: 1
-  driftChargeRateShallow: 0.4
-  miniTurboChargeTime: 0.7
-  superTurboChargeTime: 1.7
-  ultraTurboChargeTime: 2.6
-  driftBoostForce: 12
-  miniTurboBoostMultiplier: 1
-  superTurboBoostMultiplier: 1.6
-  ultraTurboBoostMultiplier: 2.2
-  miniTurboBoostDuration: 0.6
-  superTurboBoostDuration: 1.6
-  ultraTurboBoostDuration: 2.6
-  maxSteerAngle: 28
+  turnRate: 100
   steerRange: 0.35
-  steerSmoothSpeed: 8
-  centerOfMassOffset: {x: 0, y: 0.05, z: 0}
-  downforce: 15
-  uprightSpringStrength: 60
-  uprightSpringDamping: 8
+  steerSmoothSpeed: 6
+  maxSteerAngle: 28
+  turnLeanAngle: 10
+  driftLeanAngle: 18
+  leanSmoothTime: 0.2
+  driftTriggerThreshold: 0.15
+  minDriftSpeed: 4
+  driftTurnRate: 48
+  driftSlideAngle: 35
+  driftSlideCatchup: 90
+  rideHeight: 0
 --- !u!65 &2107480164
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -2254,10 +2243,63 @@ Transform:
   - {fileID: 651028102}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &880001001
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 880001002}
+  - component: {fileID: 880001003}
+  m_Layer: 0
+  m_Name: Test Track
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &880001002
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 880001001}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &880001003
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 880001001}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a7c3e91b4d2f4e6a8b1c0d9e5f7a3b21, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CommodoreCircuit.Scooter.TestTrack
+  straightLength: 40
+  cornerRadius: 16
+  trackWidth: 10
+  surfaceThickness: 0.3
+  wallHeight: 1
+  wallThickness: 0.35
+  cornerSegments: 12
+  placeScooterAtStart: 1
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
   m_Roots:
+  - {fileID: 880001002}
   - {fileID: 981023192}
   - {fileID: 325703353}
   - {fileID: 2107480166}
