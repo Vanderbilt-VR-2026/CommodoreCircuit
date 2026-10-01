@@ -14,4 +14,4 @@
 | Alex Pearle        | CS, Math           | Unity, Frontend, Backend, Python, C++         | Develop Game assets/physics, Backend development |
 | Knathifa Cambridge | CS                 | C++, Python, Storyboarding, Debugging, HCI/UX | Github Management, Asset development             |
 
-SPRINT 1 VIDEO: [https://drive.google.com/file/d/1OvjzkMCDrDujInlI412jbCorAFXqfw4g/view?usp=sharing](url)
+[Sprint 1 video](https://drive.google.com/file/d/1OvjzkMCDrDujInlI412jbCorAFXqfw4g/view?usp=sharing)
