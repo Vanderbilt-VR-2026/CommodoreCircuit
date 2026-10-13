@@ -17,7 +17,7 @@ MonoBehaviour:
     AppIdFusion: d7c8fe4b-c17e-4d45-8cfb-4e74d58611e8
     AppIdQuantum: 
     AppIdChat: 
-    AppIdVoice: 
+    AppIdVoice: 09f63408-23f2-4745-ac78-83490f9ebf16
     AppIdVideo: 
     AppVersion: 
     UseNameServer: 1
@@ -29,7 +29,7 @@ MonoBehaviour:
     EnableProtocolFallback: 1
     AuthMode: 2
     EnableLobbyStatistics: 0
-    NetworkLogging: 1
-    ClientLogging: 2
+    NetworkLogging: 0
+    ClientLogging: 0
     encryptionMode: 0
     emptyRoomTtl: 0
