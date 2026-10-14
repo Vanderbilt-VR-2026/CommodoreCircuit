@@ -96,10 +96,11 @@ public class FusionPlayerSpawnerAndLobbyController : NetworkBehaviour, IStateAut
         loadingScene = false;
         if (HasStateAuthority && SceneManager.GetActiveScene().buildIndex == LobbySceneBuildIndex)
         {
-            // Returning to Lobby starts a fresh wait, frees the old slots, and allows joins.
+            // Returning to Lobby starts a fresh wait, frees the old slots, and allows joins by code again.
+            // The room stays invisible in public lists; only the code gets players in.
             CountdownEndTime = 0;
             SpawnPlayers.Clear();
-            runner.SessionInfo.IsOpen = runner.SessionInfo.IsVisible = true;
+            runner.SessionInfo.IsOpen = true;
         }
         // Refresh the slots and create our avatar in the new scene.
         // Other clients may receive their slot later; OnChangedRender retries for them.
@@ -151,7 +152,7 @@ public class FusionPlayerSpawnerAndLobbyController : NetworkBehaviour, IStateAut
         if (now < CountdownEndTime) return;
         loadingScene = true;
         // Stop new joins and move everyone together; the scene callbacks replace their avatars.
-        Runner.SessionInfo.IsOpen = Runner.SessionInfo.IsVisible = false;
+        Runner.SessionInfo.IsOpen = false;
         Runner.LoadScene(SceneRef.FromIndex(GameSceneBuildIndex), LoadSceneMode.Single);
     }
 
@@ -161,12 +162,14 @@ public class FusionPlayerSpawnerAndLobbyController : NetworkBehaviour, IStateAut
         // The scene's UI references stay on the manager; the spawner supplies the room data.
         var manager = FusionNetworkManager.Instance;
         if (!manager) return;
+        int count = Runner.ActivePlayers.Count();
         if (manager.PlayerCountText)
-            manager.PlayerCountText.text = $"{Runner.ActivePlayers.Count()} / {Runner.SessionInfo.MaxPlayers}";
+            manager.PlayerCountText.text = $"{count} / {Runner.SessionInfo.MaxPlayers} players joined";
         // Round remaining seconds up for the display and clamp at zero while the scene starts loading.
         if (manager.CountdownText)
             manager.CountdownText.text = CountdownEndTime > 0
-                ? Mathf.CeilToInt(Mathf.Max(0, CountdownEndTime - Runner.SimulationTime)).ToString() : "Waiting...";
+                ? $"Race starts in {Mathf.CeilToInt(Mathf.Max(0, CountdownEndTime - Runner.SimulationTime))}"
+                : $"Need {Mathf.Max(0, MinimumPlayers - count)} more to start";
     }
 
     // Remove this coordinator's event subscriptions when Unity destroys it.

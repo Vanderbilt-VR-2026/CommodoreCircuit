@@ -49,6 +49,11 @@ public class FusionNetworkPlayer : NetworkBehaviour
     // Fusion calls this when the avatar is ready: its owner connects it to local headset/controller objects.
     public override void Spawned()
     {
+        // The floor marker is only a visual. As a solid collider it is moved under the local rig's
+        // CharacterController every tick (both sit at y = 0 below the headset), which blocks
+        // turning and shoves the player around. As a trigger, bullets still see it but the rig does not.
+        foreach (var marker in GroundContact.GetComponentsInChildren<Collider>(true))
+            marker.isTrigger = true;
         // In this Shared-mode setup, the client that spawned the avatar owns its state.
         if (HasStateAuthority)
         {

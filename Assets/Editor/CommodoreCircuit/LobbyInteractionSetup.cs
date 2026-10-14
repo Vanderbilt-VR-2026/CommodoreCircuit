@@ -1,3 +1,4 @@
+using Unity.XR.CoreUtils;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
@@ -19,6 +20,8 @@ namespace CommodoreCircuit.EditorTools
     ///        far around the hand that reaches), and turns off "Enable
     ///        Turn Around" on the Snap and Continuous Turn Providers, so
     ///        pushing the right stick down no longer spins the player 180°.
+    ///        Also sets the XR Origin's Tracking Origin Mode to Floor (Game Scene
+    ///        already overrides it to Floor), so Lobby uses the real headset height.
     ///     2. In Lobby Scene: puts Left/Right Hand Presence back under the
     ///        rig's Left/Right Controller, the same way Game Scene has them.
     ///        Running it again skips hands that are already there.
@@ -86,9 +89,15 @@ namespace CommodoreCircuit.EditorTools
                     turnProviders++;
                 }
 
+                // Floor makes the headset report its real height above the floor. "Not Specified" let the
+                // runtime choose, and after Link lost and regained tracking the view could restart near the floor.
+                XROrigin origin = rig.GetComponent<XROrigin>();
+                if (origin != null)
+                    origin.RequestedTrackingOriginMode = XROrigin.TrackingOriginMode.Floor;
+
                 PrefabUtility.SaveAsPrefabAsset(rig, RigPrefabPath);
                 Debug.Log($"LobbyInteractionSetup: far casting off and grab radius {NearGrabRadius} m on {interactors} Near-Far Interactor(s), " +
-                          $"turn around off on {turnProviders} turn provider(s) in {RigPrefabPath}.");
+                          $"turn around off on {turnProviders} turn provider(s), tracking origin set to Floor in {RigPrefabPath}.");
                 return true;
             }
             finally
