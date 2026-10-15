@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+
+<circle cx="256" cy="256" r="234" fill="#141414"/>
+<circle cx="256" cy="256" r="222" fill="#FFC72C"/>
+<path d="M256 34 A222 222 0 0 1 478 256 L462 256 A206 206 0 0 0 256 50 Z" fill="#C9961A" opacity="0.55" transform="rotate(90 256 256)"/>
+<path d="M70 200 A190 190 0 0 1 200 66" fill="none" stroke="#FFFFFF" stroke-width="10" stroke-linecap="round" opacity="0.75"/>
+<circle cx="256" cy="256" r="184" fill="#141414"/>
+<path d="M118 190 A150 150 0 0 1 220 104" fill="none" stroke="#3a3a3a" stroke-width="14" stroke-linecap="round"/>
+<circle cx="80" cy="256" r="7" fill="#FFFFFF" opacity="0.8"/>
+
+<defs><clipPath id="body"><rect x="150" y="196" width="210" height="130" rx="10"/></clipPath></defs>
+<g transform="rotate(-18 256 260)">
+  <path d="M368 214 L420 214 M378 260 L440 260 M368 306 L420 306" stroke="#FFFFFF" stroke-width="12" stroke-linecap="round" opacity="0.8"/>
+  <rect x="150" y="196" width="210" height="130" rx="10" fill="#FFFFFF" stroke="#FFC72C" stroke-width="9" stroke-linejoin="round" paint-order="stroke"/>
+  <g clip-path="url(#body)">
+    <polygon points="200,196 234,196 194,326 160,326" fill="#FFC72C"/><polygon points="234,196 268,196 228,326 194,326" fill="#141414"/><polygon points="268,196 302,196 262,326 228,326" fill="#FFC72C"/><polygon points="302,196 336,196 296,326 262,326" fill="#141414"/><polygon points="336,196 370,196 330,326 296,326" fill="#FFC72C"/>
+  </g>
+  <ellipse cx="150" cy="261" rx="40" ry="66" fill="#FFFFFF" stroke="#FFC72C" stroke-width="9" stroke-linejoin="round" paint-order="stroke"/>
+  <ellipse cx="150" cy="261" rx="26" ry="48" fill="#2A2E31"/>
+</g>
+
+</svg>

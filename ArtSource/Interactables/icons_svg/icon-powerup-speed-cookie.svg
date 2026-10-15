@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+<circle cx="256" cy="256" r="250" fill="#2979FF" opacity="0.35"/><circle cx="256" cy="256" r="243" fill="none" stroke="#2979FF" stroke-width="7"/>
+<circle cx="256" cy="256" r="234" fill="#141414"/>
+<circle cx="256" cy="256" r="222" fill="#FFC72C"/>
+<path d="M256 34 A222 222 0 0 1 478 256 L462 256 A206 206 0 0 0 256 50 Z" fill="#C9961A" opacity="0.55" transform="rotate(90 256 256)"/>
+<path d="M70 200 A190 190 0 0 1 200 66" fill="none" stroke="#FFFFFF" stroke-width="10" stroke-linecap="round" opacity="0.75"/>
+<circle cx="256" cy="256" r="184" fill="#141414"/>
+<path d="M118 190 A150 150 0 0 1 220 104" fill="none" stroke="#3a3a3a" stroke-width="14" stroke-linecap="round"/>
+<circle cx="80" cy="256" r="7" fill="#FFFFFF" opacity="0.8"/>
+
+<circle cx="250" cy="262" r="126" fill="#C98A45" stroke="#141414" stroke-width="8" stroke-linejoin="round" paint-order="stroke"/>
+<circle cx="246" cy="256" r="110" fill="#E4B271"/>
+<polygon points="190,202 208,190 224,206 214,224 194,220" fill="#4A2C1A" stroke="#141414" stroke-width="4" stroke-linejoin="round"/><polygon points="274,208 292,196 308,212 298,230 278,226" fill="#4A2C1A" stroke="#141414" stroke-width="4" stroke-linejoin="round"/><polygon points="222,264 240,252 256,268 246,286 226,282" fill="#4A2C1A" stroke="#141414" stroke-width="4" stroke-linejoin="round"/><polygon points="174,294 192,282 208,298 198,316 178,312" fill="#4A2C1A" stroke="#141414" stroke-width="4" stroke-linejoin="round"/><polygon points="284,294 302,282 318,298 308,316 288,312" fill="#4A2C1A" stroke="#141414" stroke-width="4" stroke-linejoin="round"/><polygon points="244,330 262,318 278,334 268,352 248,348" fill="#4A2C1A" stroke="#141414" stroke-width="4" stroke-linejoin="round"/><polygon points="154,244 172,232 188,248 178,266 158,262" fill="#4A2C1A" stroke="#141414" stroke-width="4" stroke-linejoin="round"/>
+<polygon points="352,232 300,330 340,330 314,412 404,300 360,300 392,232" fill="#2979FF" stroke="#FFFFFF" stroke-width="10" stroke-linejoin="round" paint-order="stroke"/>
+
+</svg>

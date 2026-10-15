@@ -18,3 +18,4 @@
 
 ## AI Usage:
 Our team has been using AI to assist with development across each of our roles. On the programming side, 
+Knathifa - Claude for making assets, gave it dimensions + pictures of what assets we want
