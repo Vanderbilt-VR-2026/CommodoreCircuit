@@ -15,3 +15,6 @@
 | Knathifa Cambridge | CS                 | C++, Python, Storyboarding, Debugging, HCI/UX | Github Management, Asset development             |
 
 [Sprint 1 video](https://drive.google.com/file/d/1OvjzkMCDrDujInlI412jbCorAFXqfw4g/view?usp=sharing)
+
+## AI Usage:
+Our team has been using AI to assist with development across each of our roles. On the programming side, 
