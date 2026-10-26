@@ -303,7 +303,7 @@ namespace CommodoreCircuit.EditorTools
             var button = go.AddComponent<Button>();
             ColorBlock colors = button.colors;
             colors.normalColor = new Color(1f, 1f, 1f, 0.12f);
-            colors.highlightedColor = new Color(1f, 1f, 1f, 0.3f);
+            colors.highlightedColor = new Color(0.81f, 0.68f, 0.44f, 0.45f); // Gold smudge under the laser or finger.
             colors.pressedColor = new Color(1f, 1f, 1f, 0.55f);
             colors.selectedColor = colors.normalColor;
             colors.disabledColor = new Color(1f, 1f, 1f, 0.05f);
@@ -312,6 +312,7 @@ namespace CommodoreCircuit.EditorTools
 
             TMP_Text text = CreateText("Label", rect, font, label, Vector2.zero, size, fontSize);
             Stretch(text.rectTransform);
+            go.AddComponent<ButtonLabelHighlight>();
             return button;
         }
 
