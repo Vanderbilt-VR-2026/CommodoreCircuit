@@ -13,7 +13,8 @@ public class FusionPlayerSpawnerAndLobbyController : NetworkBehaviour, IStateAut
     public static FusionPlayerSpawnerAndLobbyController Instance;
     public NetworkObject PlayerPrefab;
     public int LobbySceneBuildIndex = 0, GameSceneBuildIndex = 1;
-    [Min(2)] public int MinimumPlayers = 2;
+    // Set to 1 to test Lobby → race alone with one headset; set back to 2 for real races.
+    [Min(1)] public int MinimumPlayers = 2;
     [Min(0.1f)] public float WaitingDelay = 30f, FullRoomDelay = 5f;
     public float PlayerSpawnSpacing = 0.7f;
     // Fusion replicates this deadline to clients; compare it with Runner.SimulationTime, not local wall time.
@@ -62,7 +63,8 @@ public class FusionPlayerSpawnerAndLobbyController : NetworkBehaviour, IStateAut
                     SpawnPlayers.Set(SpawnPlayers.IndexOf(PlayerRef.None), joinedPlayer);
         }
         // With only one player left in Game, the scene authority returns the room to Lobby.
-        if (runner.IsSceneAuthority && !loadingScene && !runner.IsSceneManagerBusy &&
+        // A solo test (Minimum Players = 1) is allowed to race alone, so it stays.
+        if (MinimumPlayers > 1 && runner.IsSceneAuthority && !loadingScene && !runner.IsSceneManagerBusy &&
             SceneManager.GetActiveScene().buildIndex == GameSceneBuildIndex && runner.ActivePlayers.Count() == 1)
         {
             loadingScene = true;
@@ -114,7 +116,14 @@ public class FusionPlayerSpawnerAndLobbyController : NetworkBehaviour, IStateAut
         int slot = SpawnPlayers.IndexOf(Runner.LocalPlayer);
         // Wait for our slot and scene, and never create a second local avatar.
         if (slot < 0 || loadingScene || Runner.IsSceneManagerBusy || Runner.GetPlayerObject(Runner.LocalPlayer)) return;
-        var rig = GameObject.Find("XR Origin (XR Rig)").GetComponent<XROrigin>();
+        // The campus track rides on the scooter's own camera rig, which has no XR Origin to follow yet.
+        var rigObject = GameObject.Find("XR Origin (XR Rig)");
+        if (!rigObject)
+        {
+            Debug.LogWarning($"No \"XR Origin (XR Rig)\" in {SceneManager.GetActiveScene().name}; no avatar spawned.", this);
+            return;
+        }
+        var rig = rigObject.GetComponent<XROrigin>();
         // Spread numbered slots across the rig's right direction, centered on its starting point.
         float offset = (slot - (Runner.SessionInfo.MaxPlayers - 1) * 0.5f) * PlayerSpawnSpacing;
         // Project onto the horizontal plane so the spacing never pushes players upward or downward.
