@@ -15,10 +15,11 @@ public class FusionPlayerSpawnerAndLobbyController : NetworkBehaviour, IStateAut
     public int LobbySceneBuildIndex = 0, GameSceneBuildIndex = 1;
     // Set to 1 to test Lobby → race alone with one headset; set back to 2 for real races.
     [Min(1)] public int MinimumPlayers = 2;
-    [Min(0.1f)] public float WaitingDelay = 30f, FullRoomDelay = 5f;
+    // Seconds from the host pressing Start Race to the track loading, so everyone sees it coming.
+    [Min(0.1f)] public float StartDelay = 3f;
     public float PlayerSpawnSpacing = 0.7f;
     // Fusion replicates this deadline to clients; compare it with Runner.SimulationTime, not local wall time.
-    [Networked] public float CountdownEndTime { get; set; } // Zero means waiting.
+    [Networked] public float CountdownEndTime { get; set; } // Zero means waiting for the host.
     // Player IDs, not avatar objects: each array index is a numbered spawn position.
     // NetworkArray has fixed slots, so use Set(index, player), not List.Add(player).
     // PlayerRef.None marks an empty slot; Capacity(20) supports rooms up to 20 players.
@@ -140,25 +141,34 @@ public class FusionPlayerSpawnerAndLobbyController : NetworkBehaviour, IStateAut
         Debug.Log($"Spawned avatar for {Runner.LocalPlayer} in {SceneManager.GetActiveScene().name}, slot {slot}.", this);
     }
 
-    // The master advances the shared lobby countdown on Fusion simulation ticks.
+    // The host is the coordinator's state authority: the lobby creator, or whoever Fusion
+    // hands authority to if the creator leaves. Only the host may start the race.
+    public bool IsHost => Object && Object.IsValid && HasStateAuthority;
+
+    // True while the host is in the lobby, enough players are here, and no countdown is running yet.
+    public bool CanStartRace => IsHost && !loadingScene && CountdownEndTime == 0 &&
+        SceneManager.GetActiveScene().buildIndex == LobbySceneBuildIndex &&
+        Runner.ActivePlayers.Count() >= MinimumPlayers;
+
+    // The host's Start Race button calls this. The short shared countdown runs in FixedUpdateNetwork.
+    public void StartRace()
+    {
+        if (CanStartRace) CountdownEndTime = Runner.SimulationTime + StartDelay;
+    }
+
+    // The master runs the countdown the host started, then moves everyone to the race.
     public override void FixedUpdateNetwork()
     {
-        if (!HasStateAuthority || loadingScene || Runner.IsSceneManagerBusy ||
+        // Zero means nobody has pressed Start Race; players can hang out in the lobby as long as they like.
+        if (!HasStateAuthority || loadingScene || Runner.IsSceneManagerBusy || CountdownEndTime == 0 ||
             SceneManager.GetActiveScene().buildIndex != LobbySceneBuildIndex) return;
-        int count = Runner.ActivePlayers.Count();
-        // Cancel the countdown if too few players remain; the next valid group gets a fresh wait.
-        if (count < MinimumPlayers)
+        // Cancel if players leave during the countdown; the host can press Start Race again.
+        if (Runner.ActivePlayers.Count() < MinimumPlayers)
         {
             CountdownEndTime = 0;
             return;
         }
-        // Store a shared finish time, then shorten the wait if the room fills up.
-        float now = Runner.SimulationTime;
-        if (CountdownEndTime == 0) CountdownEndTime = now + WaitingDelay;
-        // Min can shorten an existing deadline, but never extend it on subsequent ticks.
-        if (count == Runner.SessionInfo.MaxPlayers)
-            CountdownEndTime = Mathf.Min(CountdownEndTime, now + FullRoomDelay);
-        if (now < CountdownEndTime) return;
+        if (Runner.SimulationTime < CountdownEndTime) return;
         loadingScene = true;
         // Stop new joins and move everyone together; the scene callbacks replace their avatars.
         Runner.SessionInfo.IsOpen = false;
@@ -174,11 +184,14 @@ public class FusionPlayerSpawnerAndLobbyController : NetworkBehaviour, IStateAut
         int count = Runner.ActivePlayers.Count();
         if (manager.PlayerCountText)
             manager.PlayerCountText.text = $"{count} / {Runner.SessionInfo.MaxPlayers} players joined";
+        if (!manager.CountdownText) return;
         // Round remaining seconds up for the display and clamp at zero while the scene starts loading.
-        if (manager.CountdownText)
-            manager.CountdownText.text = CountdownEndTime > 0
-                ? $"Race starts in {Mathf.CeilToInt(Mathf.Max(0, CountdownEndTime - Runner.SimulationTime))}"
-                : $"Need {Mathf.Max(0, MinimumPlayers - count)} more to start";
+        if (CountdownEndTime > 0)
+            manager.CountdownText.text = $"Race starts in {Mathf.CeilToInt(Mathf.Max(0, CountdownEndTime - Runner.SimulationTime))}";
+        else if (count < MinimumPlayers)
+            manager.CountdownText.text = $"Need {MinimumPlayers - count} more to start";
+        else
+            manager.CountdownText.text = IsHost ? "Press Start Race when everyone's ready" : "Waiting for the host to start...";
     }
 
     // Remove this coordinator's event subscriptions when Unity destroys it.

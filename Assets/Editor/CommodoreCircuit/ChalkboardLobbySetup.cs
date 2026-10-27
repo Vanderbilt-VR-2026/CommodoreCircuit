@@ -15,7 +15,8 @@ namespace CommodoreCircuit.EditorTools
 {
     /// <summary>
     /// Builds the chalkboard lobby: a Create / Join menu with a code keypad, then the
-    /// lobby code, status line, "2 / 4 players joined" and countdown, in a chalk-style font.
+    /// lobby code, status line, "2 / 4 players joined", the host's Start Race button and countdown,
+    /// in a chalk-style font.
     ///
     /// Menu command under CommodoreCircuit:
     ///   - "Set Up Chalkboard Lobby Display" -
@@ -30,7 +31,7 @@ namespace CommodoreCircuit.EditorTools
     ///        CanvasController so it stops turning toward the camera, sets Max Players to 4
     ///        and clears the manager's Lobby Canvas field so it no longer moves the canvas.
     ///     4. Builds the LobbyMenu panels: Main (Create / Join), Join (keypad, Join, Back)
-    ///        and the lobby display in Waiting Room Panel (code, Leave). Adds a Tracked Device
+    ///        and the lobby display in Waiting Room Panel (code, host-only Start Race, Leave). Adds a Tracked Device
     ///        Graphic Raycaster so the rig's Poke Interactors can press the buttons by finger.
     ///     5. Fixes the Photon region to "us" if none is set, so everyone's codes refer to
     ///        rooms on the same server (rooms in different regions cannot see each other).
@@ -200,6 +201,7 @@ namespace CommodoreCircuit.EditorTools
             DestroyChild(canvas.transform, JoinPanelName);
             DestroyChild(lobbyPanel, "Lobby Code Text");
             DestroyChild(lobbyPanel, "Leave Button");
+            DestroyChild(lobbyPanel, "Start Race Button");
 
             LobbyMenu menu = canvas.GetComponent<LobbyMenu>();
             if (menu == null)
@@ -237,10 +239,14 @@ namespace CommodoreCircuit.EditorTools
             Wire(CreateButton("Join Button", join, font, "Join", new Vector2(125f, -16f), new Vector2(90f, 30f), 16f), menu.JoinLobby);
             Wire(CreateButton("Back Button", join, font, "Back", new Vector2(125f, -50f), new Vector2(90f, 24f), 12f), menu.ShowMain);
 
-            // Lobby: the code at the top for others to type in, and a way back out.
+            // Lobby: the code at the top for others to type in, the host's Start Race, and a way back out.
             menu.LobbyCodeText = CreateText("Lobby Code Text", lobbyPanel, font, "Lobby code: ----",
                 new Vector2(0f, 55f), new Vector2(380f, 30f), 24f);
-            Wire(CreateButton("Leave Button", lobbyPanel, font, "Leave Lobby", new Vector2(0f, -60f), new Vector2(90f, 20f), 11f),
+            Button startRace = CreateButton("Start Race Button", lobbyPanel, font, "Start Race",
+                new Vector2(-55f, -60f), new Vector2(100f, 20f), 13f);
+            Wire(startRace, menu.StartRace);
+            menu.StartRaceButton = startRace.gameObject;
+            Wire(CreateButton("Leave Button", lobbyPanel, font, "Leave Lobby", new Vector2(55f, -60f), new Vector2(90f, 20f), 11f),
                 menu.LeaveLobby);
 
             menu.MainPanel = main.gameObject;
