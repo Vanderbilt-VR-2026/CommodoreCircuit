@@ -121,3 +121,25 @@ This single styleguide card covers both color and type. The tables below are the
 ---
 
 ## 6. Scenes / Map (Alumni Lawn Environment) — ⬜ TBD
+
+
+---
+
+## 7. Race Flow UI — 🟡 Implemented, needs in-headset tuning
+
+![Race UI mockup](assets/race-ui-mockup.png)
+
+*Countdown → timer → wrong-way → results. Code: `Assets/Scripts/Race/`. Add to a scene with **CommodoreCircuit > Race > Add Race Systems to Open Scene**.*
+
+| Screen | Where it sits | Art / type | Behavior |
+|---|---|---|---|
+| **Pre-race countdown** | 4 m ahead, just above eye level | Luckiest Guy, white with black outline; GO! in Bright Gold | "WAITING FOR RACERS..." (online) → "GET READY!" → 3-2-1 punch-in → GO!. Beep + light controller tick per number. Throttle, brake and drift are locked until GO (steering and bar recentering still work). |
+| **Race timer** | Dashboard plate 0.75 m ahead, just above the handlebar | `hud-empty-plate-frame`, Rajdhani Bold (time), Anton Italic (lap), `hud-standings-badges` (position) | `00:42.17`, `LAP 2/3`, `BEST 00:31.20`, live position badge (online only). "LAP 2" / "FINAL LAP!" callout up in view on each lap. Freezes on your finish time. |
+| **Wrong way** | 3 m ahead, eye level | `hud-wrong-way-sign` | Appears after ~1 s facing/driving against the race line, clears ~0.4 s after turning back. Gentle pulse + wobble, repeating chirp and soft buzz. No red flashes or camera shake (VR comfort). |
+| **Final standings** | 2.4 m ahead, eye level | `hud-finish-banner`, `ui-winner-badge`, Poppins SemiBold names, Rajdhani times | FINISH banner pops when you cross the line, then live standings: finished = time, still racing = `LAP 2/3`, out of time = `DNF`. WINNER! badge if you won a multiplayer race. Footer: "Back to lobby in 14" (online) or "Press A to race again" (solo). |
+
+**Rules**
+- Race UI draws on top of the world (overlay shaders), so a hedge, the Rand tunnel or another racer can't hide it.
+- Everything rides with the scooter's heading at the rider's eye height. Nothing is head-locked.
+- Laps are measured along the track centerline from `campus_track.json` (979.8 m lap), so there are no checkpoint triggers to place, rocking over the line can't farm laps, and a start grid slightly behind the line is fine.
+- Default race: 3 laps. Online, the race ends when everyone finishes or 45 s after the winner, then results show for 20 s before returning to the lobby. All tunable on **Network Race Session** / **Race Systems**.

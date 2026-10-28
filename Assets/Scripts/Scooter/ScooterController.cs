@@ -200,6 +200,12 @@ namespace CommodoreCircuit.Scooter
         public BoostTier ActiveBoostTier { get; private set; } = BoostTier.None;
         /// <summary>Raised the moment a drift is released with enough charge for a boost.</summary>
         public event System.Action<BoostTier> BoostStarted;
+        /// <summary>
+        /// While true, throttle, brake and drift are ignored and the scooter coasts.
+        /// Steering and recentering still work. The race sets this during the
+        /// countdown and after the finish (RaceProgress).
+        /// </summary>
+        public bool InputLocked { get; set; }
 
         private float driftCharge;
         private float boostTimer;
@@ -421,6 +427,12 @@ namespace CommodoreCircuit.Scooter
             float brakeInput = brakeAction.ReadValue<float>();
             float driftInput = driftAction.ReadValue<float>();
             float steerInput = Mathf.Clamp(ComputeHandSteerInput() + keyboardSteerAction.ReadValue<float>(), -1f, 1f);
+            if (InputLocked)
+            {
+                accelInput = 0f;
+                brakeInput = 0f;
+                driftInput = 0f;
+            }
 
             smoothedSteer = Mathf.MoveTowards(smoothedSteer, steerInput, steerSmoothSpeed * Time.fixedDeltaTime);
 

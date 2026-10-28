@@ -67,9 +67,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::FusionPlayerSpawnerAndLobbyController
   PlayerPrefab: {fileID: 4492543089198509801, guid: 5be5ed36a27444e9b99c99a281fe8a63, type: 3}
   LobbySceneBuildIndex: 0
-  GameSceneBuildIndex: 1
+  GameSceneBuildIndex: 2
   MinimumPlayers: 1
   StartDelay: 3
   PlayerSpawnSpacing: 0.7
   _CountdownEndTime: 0
   _SpawnPlayers: []
+  FallResetDistance: 3

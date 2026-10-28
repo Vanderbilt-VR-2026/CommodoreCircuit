@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+
+<circle cx="256" cy="256" r="234" fill="#141414"/>
+<circle cx="256" cy="256" r="222" fill="#FFC72C"/>
+<path d="M256 34 A222 222 0 0 1 478 256 L462 256 A206 206 0 0 0 256 50 Z" fill="#C9961A" opacity="0.55" transform="rotate(90 256 256)"/>
+<path d="M70 200 A190 190 0 0 1 200 66" fill="none" stroke="#FFFFFF" stroke-width="10" stroke-linecap="round" opacity="0.75"/>
+<circle cx="256" cy="256" r="184" fill="#141414"/>
+<path d="M118 190 A150 150 0 0 1 220 104" fill="none" stroke="#3a3a3a" stroke-width="14" stroke-linecap="round"/>
+<circle cx="80" cy="256" r="7" fill="#FFFFFF" opacity="0.8"/>
+
+<path d="M120 330 Q200 380 300 350 M100 290 Q170 330 250 318" fill="none" stroke="#FFFFFF" stroke-width="11" stroke-linecap="round" opacity="0.75"/>
+<g transform="rotate(-12 280 240)">
+  <ellipse cx="280" cy="250" rx="140" ry="64" fill="#FFFFFF" stroke="#FFC72C" stroke-width="9" stroke-linejoin="round" paint-order="stroke"/>
+  <ellipse cx="280" cy="236" rx="110" ry="42" fill="none" stroke="#E8E2D0" stroke-width="6"/>
+  <polygon points="280,200 290,226 318,226 296,242 304,268 280,252 256,268 264,242 242,226 270,226" fill="#141414"/>
+</g>
+
+</svg>
