@@ -12,6 +12,8 @@ public class FusionPlayerSpawnerAndLobbyController : NetworkBehaviour, IStateAut
     // Access this client's copy after Spawned; Instance is null before the network object arrives.
     public static FusionPlayerSpawnerAndLobbyController Instance;
     public NetworkObject PlayerPrefab;
+    // Spawned instead of the avatar in scenes without an XR Origin (the race track), so the race knows we've arrived.
+    public NetworkObject RacerPrefab;
     public int LobbySceneBuildIndex = 0, GameSceneBuildIndex = 1;
     // Set to 1 to test Lobby → race alone with one headset; set back to 2 for real races.
     [Min(1)] public int MinimumPlayers = 2;
@@ -123,12 +125,15 @@ public class FusionPlayerSpawnerAndLobbyController : NetworkBehaviour, IStateAut
         // Wait for our slot and scene, and never create a second local avatar.
         if (slot < 0 || loadingScene || Runner.IsSceneManagerBusy || Runner.GetPlayerObject(Runner.LocalPlayer)) return;
         // The campus track rides on the scooter's own camera rig, which has no XR Origin to follow yet.
-        var rigObject = GameObject.Find("XR Origin (XR Rig)");
-        if (!rigObject)
-        {
-            Debug.LogWarning($"No \"XR Origin (XR Rig)\" in {SceneManager.GetActiveScene().name}; no avatar spawned.", this);
-            return;
-        }
+        // The campus track rides on the scooter's own camera rig, which has no XR Origin to follow yet.
+          var rigObject = GameObject.Find("XR Origin (XR Rig)");
+          if (!rigObject)
+          {
+              // No avatar on the track: spawn just our race stats, which report Ready once the scooter is placed.
+              if (RacerPrefab) Runner.SetPlayerObject(Runner.LocalPlayer, Runner.Spawn(RacerPrefab));
+              else Debug.LogWarning($"No \"XR Origin (XR Rig)\" in {SceneManager.GetActiveScene().name} and no Racer Prefab set.", this);
+              return;
+          }
         var rig = rigObject.GetComponent<XROrigin>();
         // Spread numbered slots across the rig's right direction, centered on its starting point.
         float offset = (slot - (Runner.SessionInfo.MaxPlayers - 1) * 0.5f) * PlayerSpawnSpacing;
