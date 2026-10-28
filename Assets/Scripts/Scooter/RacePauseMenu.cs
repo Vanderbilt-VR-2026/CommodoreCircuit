@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using CommodoreCircuit.Race;
 using CommodoreCircuit.Scooter;
 using TMPro;
 using UnityEngine;
@@ -131,12 +132,15 @@ public class RacePauseMenu : MonoBehaviour
 
         // The scooter moves itself in FixedUpdate, so disabling it holds it exactly where it is.
         if (scooter) scooter.enabled = false;
+        // Stop our race clock too; other racers' clocks keep running.
+        if (RaceProgress.Local) RaceProgress.Local.SetPaused(true);
     }
 
     private void Close()
     {
         panel.SetActive(false);
         if (scooter) scooter.enabled = true;
+        if (RaceProgress.Local) RaceProgress.Local.SetPaused(false);
     }
 
     // Restart and Back to Lobby move the whole room, so only the host gets them online.

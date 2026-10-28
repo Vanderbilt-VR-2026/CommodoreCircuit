@@ -72,7 +72,29 @@ namespace CommodoreCircuit.Race
         private Vector3 lastPosition;
         private bool hasLastPosition;
         private float lapStartTime;
+        private float pausedTotal;
+        private float pausedAt = -1f;
         private float wrongTimer, rightTimer;
+
+        public bool IsPaused => pausedAt >= 0f;
+
+        /// <summary>Your own time since GO, not counting time spent in the pause menu.</summary>
+        public float RaceTime
+        {
+            get
+            {
+                float now = RaceSession.Current?.RaceTime ?? 0f;
+                return Mathf.Max(0f, (IsPaused ? pausedAt : now) - pausedTotal);
+            }
+        }
+
+        /// <summary>Stops or restarts this rider's clock. Other racers' clocks are unaffected.</summary>
+        public void SetPaused(bool paused)
+        {
+            float now = RaceSession.Current?.RaceTime ?? 0f;
+            if (paused && !IsPaused) pausedAt = now;
+            else if (!paused && IsPaused) { pausedTotal += now - pausedAt; pausedAt = -1f; }
+        }
         private RacePhase lastPhase = RacePhase.Waiting;
 
         private void Awake()
@@ -122,6 +144,8 @@ namespace CommodoreCircuit.Race
             BestLapTime = 0f;
             lapTimes.Clear();
             lapStartTime = 0f;
+            pausedTotal = 0f;
+            if (IsPaused) pausedAt = 0f;
             SetWrongWay(false);
         }
 
@@ -153,7 +177,7 @@ namespace CommodoreCircuit.Race
             // Only a NEW furthest lap counts, so reversing over the line and back is not a lap.
             while (reached > CompletedLaps && !Finished)
             {
-                float now = session.RaceTime;
+                float now = RaceTime;
                 float lapTime = now - lapStartTime;
                 lapStartTime = now;
                 lapTimes.Add(lapTime);

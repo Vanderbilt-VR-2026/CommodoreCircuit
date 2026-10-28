@@ -67,7 +67,7 @@ namespace CommodoreCircuit.Race.UI
             UpdateCallout();
             if (!show) return;
 
-            float t = me.Finished ? me.FinishTime : session.RaceTime;
+            float t = me.Finished ? me.FinishTime : me.RaceTime;
             timeText.text = RaceFormat.Time(t);
             timeText.color = me.Finished ? newBestColor : timeColor;
 
