@@ -26,8 +26,13 @@ public class FusionPlayerSpawnerAndLobbyController : NetworkBehaviour, IStateAut
     // When updated slots reach another client, it can try spawning its local avatar.
     [Networked, Capacity(20), OnChangedRender(nameof(SpawnPlayer))]
     public NetworkArray<PlayerRef> SpawnPlayers => default;
+    // How far below our spawn height the headset may drop before we are put back on the spawn spot.
+    [Min(0.5f)] public float FallResetDistance = 3f;
     private NetworkEvents events;
     private bool loadingScene;
+    // This client's rig and spawn spot in the current scene, for the fall safety net. Null on the track.
+    private XROrigin localRig;
+    private Vector3 spawnPosition;
 
     // Fusion calls this on every client when the shared coordinator becomes available.
     public override async void Spawned()
@@ -133,12 +138,22 @@ public class FusionPlayerSpawnerAndLobbyController : NetworkBehaviour, IStateAut
         position.y = rig.Camera.transform.position.y;
         // Move the rig so the headset reaches this position, accounting for its offset inside the rig.
         rig.MoveCameraToWorldLocation(position);
+        localRig = rig;
+        spawnPosition = position;
         // This spawn creates THIS CLIENT'S visible player avatar. Fusion shows it to everyone.
         // The manager's separate Spawn call creates the persistent shared controller instead.
         var avatar = Runner.Spawn(PlayerPrefab, rig.transform.position, rig.transform.rotation);
         // Remember which avatar belongs to us, so we can find it and avoid spawning duplicates.
         Runner.SetPlayerObject(Runner.LocalPlayer, avatar);
         Debug.Log($"Spawned avatar for {Runner.LocalPlayer} in {SceneManager.GetActiveScene().name}, slot {slot}.", this);
+    }
+
+    // Safety net: if our rig ever slips through a wall and falls out of the room, put it back on its spawn spot.
+    // Unity object checks treat the rig as missing once its scene has been replaced.
+    private void Update()
+    {
+        if (localRig && localRig.Camera.transform.position.y < spawnPosition.y - FallResetDistance)
+            localRig.MoveCameraToWorldLocation(spawnPosition);
     }
 
     // The host is the coordinator's state authority: the lobby creator, or whoever Fusion
@@ -154,6 +169,19 @@ public class FusionPlayerSpawnerAndLobbyController : NetworkBehaviour, IStateAut
     public void StartRace()
     {
         if (CanStartRace) CountdownEndTime = Runner.SimulationTime + StartDelay;
+    }
+
+    // Pause menu, host only: reload the track for everyone, or bring everyone back to the classroom.
+    public void RestartRace() => LoadSceneForEveryone(GameSceneBuildIndex);
+    public void ReturnToLobby() => LoadSceneForEveryone(LobbySceneBuildIndex);
+
+    private void LoadSceneForEveryone(int buildIndex)
+    {
+        if (!IsHost || loadingScene || Runner.IsSceneManagerBusy ||
+            SceneManager.GetActiveScene().buildIndex != GameSceneBuildIndex) return;
+        // The scene callbacks replace avatars; returning to Lobby also reopens the room to joins.
+        loadingScene = true;
+        Runner.LoadScene(SceneRef.FromIndex(buildIndex), LoadSceneMode.Single);
     }
 
     // The master runs the countdown the host started, then moves everyone to the race.
