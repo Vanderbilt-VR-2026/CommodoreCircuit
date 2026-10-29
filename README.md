@@ -14,7 +14,6 @@ Players meet in a VR classroom, join a lobby with a code, and race scooters arou
 - [Install the Game](#install-the-game)
 - [Play](#play)
 - [Controls](#controls)
-- [Troubleshooting](#troubleshooting)
 - [Build from Source](#build-from-source)
 - [Sprint Builds and Write-ups](#sprint-builds-and-write-ups)
 - [Developers/Roles](#developersroles)
@@ -100,20 +99,6 @@ If the handlebar ends up in the wrong spot, click either thumbstick to move it b
 | Left menu button (☰)                   | Pause menu (left stick to move, A or right trigger to choose) |
 | Right controller + trigger             | Point at and press buttons on the lobby chalkboard            |
 | Keyboard W / S / A·D / Space / R / Esc | Editor testing: go / brake / steer / drift / recenter / pause |
-
----
-
-## Troubleshooting
-
-| Problem                                                     | Fix                                                                                                                                                      |
-| ----------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| The "Allow USB debugging?" prompt closes when you tap it    | Unplug, close every app, and plug back in from the home screen. Don't open it from notifications; wait for it to appear in front of you.                 |
-| The headset isn't found, or shows as `unauthorized`         | In the headset, go to **Settings → System → Developer**, turn **USB Debugging** off and on, and reconnect. Try another cable or port and avoid hubs.     |
-| You can't find the game                                     | In the Library, switch the filter from **All** to **Unknown Sources**.                                                                                  |
-| "No lobby with that code"                                   | Check the code on the chalkboard. Codes never use I, L, O, 0, or 1.                                                                                     |
-| The race doesn't start                                      | A race needs at least 2 players by default. For solo testing, [build from source](#build-from-source) with **Minimum Players** set to 1.                |
-| The handlebar is in the wrong spot                          | Click either thumbstick to move it back to your hands.                                                                                                  |
-| You feel motion sick                                        | Take a break. Keep your head still and let the scooter turn under you. The view stays level on purpose, and the edges darken at speed to help.          |
 
 ---
 
