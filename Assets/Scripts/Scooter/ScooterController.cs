@@ -421,6 +421,32 @@ namespace CommodoreCircuit.Scooter
             isCalibrated = true;
         }
 
+        /// <summary>
+        /// Puts the scooter at a new spot, stopped and upright. Only the yaw of
+        /// <paramref name="rotation"/> is used. The next physics step snaps it to the ground.
+        /// Used by the race to put each player on their own grid slot.
+        /// </summary>
+        public void Teleport(Vector3 position, Quaternion rotation)
+        {
+            headingYaw = rotation.eulerAngles.y;
+            Quaternion upright = Quaternion.Euler(0f, headingYaw, 0f);
+            currentSpeed = 0f;
+            currentSlip = 0f;
+            currentLean = 0f;
+            leanVelocity = 0f;
+            driftCharge = 0f;
+            boostTimer = 0f;
+            IsDrifting = false;
+            ChargeTier = BoostTier.None;
+            wasAgainstWall = false;
+            wallPenaltyTimer = 0f;
+
+            transform.SetPositionAndRotation(position, upright);
+            if (rb == null) rb = GetComponent<Rigidbody>();
+            rb.position = position;
+            rb.rotation = upright;
+        }
+
         private void FixedUpdate()
         {
             float accelInput = accelerateAction.ReadValue<float>();

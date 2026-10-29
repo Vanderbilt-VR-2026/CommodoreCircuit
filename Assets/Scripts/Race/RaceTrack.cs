@@ -25,6 +25,18 @@ namespace CommodoreCircuit.Race
         [Tooltip("If the nearest point in the window is further than this (m), search the whole lap. Handles respawns and teleports.")]
         [SerializeField, Min(1f)] private float relocateDistance = 20f;
 
+        [Header("Starting grid")]
+        [Tooltip("How far behind the start line the front row sits (m).")]
+        [SerializeField, Min(0f)] private float gridFirstRowBack = 1f;
+        [Tooltip("Distance between rows (m). Two racers per row.")]
+        [SerializeField, Min(1f)] private float gridRowSpacing = 3.5f;
+        [Tooltip("How far each lane is from the centerline (m). Keep it under half the road width.")]
+        [SerializeField, Min(0f)] private float gridLaneOffset = 1.8f;
+        [Tooltip("The right-hand lane sits this much further back, so nobody is side by side (m).")]
+        [SerializeField, Min(0f)] private float gridStagger = 1.5f;
+        [Tooltip("Grid slots drawn in the Scene view.")]
+        [SerializeField, Min(0)] private int gridGizmoSlots = 4;
+
         [SerializeField] private bool drawGizmos = true;
 
         private Vector2[] points;     // local XZ
@@ -175,6 +187,29 @@ namespace CommodoreCircuit.Race
             return transform.TransformPoint(new Vector3(q.x, startLocal.y, q.y));
         }
 
+        /// <summary>
+        /// Where grid slot <paramref name="slot"/> (0 = pole) starts, facing the race direction.
+        /// Two lanes, staggered, following the road behind the start line. Slots are behind
+        /// the line, which RaceProgress counts as negative distance, so nobody loses a lap.
+        /// </summary>
+        public Pose GridPose(int slot)
+        {
+            if (!IsReady) return new Pose(StartPosition, Quaternion.LookRotation(StartForward, Vector3.up));
+            slot = Mathf.Max(0, slot);
+            int row = slot / 2, lane = slot % 2;
+            float back = gridFirstRowBack + row * gridRowSpacing + lane * gridStagger;
+
+            float startDistance = Project(StartPosition).Distance;
+            Vector3 centre = PositionAt(startDistance - back);
+            TrackPoint here = Project(centre);
+            Vector3 right = Vector3.Cross(Vector3.up, here.Forward).normalized;
+            float offset = Mathf.Min(gridLaneOffset, Mathf.Max(0f, here.HalfWidth - 0.75f));
+
+            Vector3 position = centre + right * (lane == 0 ? -offset : offset);
+            position.y = StartPosition.y;
+            return new Pose(position, Quaternion.LookRotation(here.Forward, Vector3.up));
+        }
+
         private void TrySegment(int i, Vector2 p, ref int best, ref float bestDistSq, ref float bestT)
         {
             Vector2 a = points[i], b = points[(i + 1) % points.Length];
@@ -215,6 +250,18 @@ namespace CommodoreCircuit.Race
             Gizmos.DrawLine(s, s + f * 6f);
             Gizmos.DrawLine(s + f * 6f, s + f * 4.5f + r * 1.2f);
             Gizmos.DrawLine(s + f * 6f, s + f * 4.5f - r * 1.2f);
+
+            // Grid slots: a box per scooter, with a line showing which way it faces.
+            Gizmos.color = new Color(0.3f, 0.9f, 1f);
+            for (int i = 0; i < gridGizmoSlots; i++)
+            {
+                Pose g = GridPose(i);
+                Vector3 c = g.position + Vector3.up * 0.4f;
+                Gizmos.matrix = Matrix4x4.TRS(c, g.rotation, Vector3.one);
+                Gizmos.DrawWireCube(Vector3.zero, new Vector3(0.5f, 0.8f, 1.4f));
+                Gizmos.DrawLine(Vector3.zero, Vector3.forward * 1.2f);
+                Gizmos.matrix = Matrix4x4.identity;
+            }
         }
     }
 }
