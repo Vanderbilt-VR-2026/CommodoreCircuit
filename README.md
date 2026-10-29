@@ -42,16 +42,33 @@ Players meet in a VR classroom, join a lobby with a code, and race scooters arou
 
 ## Controls
 
-| Input                       | Action                                                           |
-| --------------------------- | ---------------------------------------------------------------- |
-| A                           | Go                                                               |
-| B                           | Brake / reverse                                                  |
-| Left stick (or handlebar)   | Steer. You can also grab the handlebar with both grips and twist |
-| Right trigger               | Drift (let go for a boost)                                       |
-| Right stick click           | Recenter                                                         |
-| Left menu button (☰)        | Pause menu (left stick to move, A or right trigger to choose)    |
-| Right controller + trigger  | Point at and press buttons on the lobby chalkboard               |
-| Keyboard WASD + Space / Esc | Editor testing (drive / pause)                                   |
+### How to Drive
+
+![How to ride the scooter: grab the handlebar, twist to steer, and the button layout](Design/driving-controls.svg)
+
+1. **Grab the handlebar:** hold the **grip** button (middle finger) on **both** controllers. The scooter only responds while you're holding the bars.
+2. **Hold the controllers level:** keep them horizontal to the ground, the way you'd hold the handles of a real scooter.
+3. **Go:** pull the **left trigger**.
+4. **Brake / reverse:** pull the **right trigger** to slow down. Keep holding it after you stop to back up.
+5. **Steer:** keep both grips held and **twist** the bars. Push your right hand forward to turn left, or your left hand forward to turn right.
+6. **Drift:** while turning, hold **A**. Let go for a speed boost.
+
+If the handlebar ends up in the wrong spot, click either thumbstick to move it back to your hands.
+
+### All Controls
+
+| Input                                    | Action                                                        |
+| ---------------------------------------- | ------------------------------------------------------------- |
+| Grip on both hands                       | Grab the handlebar                                            |
+| Twist the handlebar                      | Steer                                                         |
+| Left trigger                             | Go                                                            |
+| Right trigger                            | Brake, then reverse                                           |
+| A (or X)                                 | Drift while turning (let go for a boost)                      |
+| Click either thumbstick                  | Recenter the handlebar to your hands                          |
+| Right stick up / down (while stopped)    | Raise or lower your rider height                              |
+| Left menu button (☰)                     | Pause menu (left stick to move, A or right trigger to choose) |
+| Right controller + trigger               | Point at and press buttons on the lobby chalkboard            |
+| Keyboard W / S / A·D / Space / R / Esc   | Editor testing: go / brake / steer / drift / recenter / pause |
 
 ---
 
