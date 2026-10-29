@@ -129,6 +129,66 @@ namespace CommodoreCircuit.EditorTools
             EditorUtility.DisplayDialog("Network Player prefab", AddNetworkRacerToPlayerPrefab(true), "OK");
         }
 
+        private const string RacerPrefabPath = "Assets/Fusion and Essential Spawned Player Stuffs/Prefabs/Network Racer.prefab";
+
+        /// <summary>
+        /// Lets racers see each other: a NetworkTransform on the Network Racer root (follows the
+        /// scooter) and a "Head" child with its own NetworkTransform (follows the headset).
+        /// RemoteRacerVisual draws the scooter and rider at runtime, so the prefab needs no art.
+        /// Safe to run again.
+        /// </summary>
+        [MenuItem("CommodoreCircuit/Race/Set Up Network Racer Prefab (Visible Racers)")]
+        private static void SetUpRacerPrefabMenu()
+        {
+            string path = RacerPrefabPath;
+            if (AssetDatabase.LoadAssetAtPath<GameObject>(path) == null)
+            {
+                path = null;
+                foreach (string guid in AssetDatabase.FindAssets("t:Prefab"))
+                {
+                    string p = AssetDatabase.GUIDToAssetPath(guid);
+                    var go = AssetDatabase.LoadAssetAtPath<GameObject>(p);
+                    if (go && go.GetComponent<NetworkRacer>() && !go.GetComponent<FusionNetworkPlayer>()) { path = p; break; }
+                }
+            }
+            if (path == null)
+            {
+                EditorUtility.DisplayDialog("Network Racer prefab", "No Network Racer prefab found.", "OK");
+                return;
+            }
+
+            var contents = PrefabUtility.LoadPrefabContents(path);
+            try
+            {
+                // Spawned with no position; the owner moves it onto their scooter every tick.
+                contents.transform.SetPositionAndRotation(Vector3.zero, Quaternion.identity);
+                if (!contents.GetComponent<NetworkRacer>()) contents.AddComponent<NetworkRacer>();
+                if (!contents.GetComponent<NetworkTransform>()) contents.AddComponent<NetworkTransform>();
+
+                Transform head = contents.transform.Find("Head");
+                if (!head)
+                {
+                    head = new GameObject("Head").transform;
+                    head.SetParent(contents.transform, false);
+                }
+                head.localPosition = new Vector3(0f, 1.7f, 0f);
+                head.localRotation = Quaternion.identity;
+                if (!head.GetComponent<NetworkTransform>()) head.gameObject.AddComponent<NetworkTransform>();
+
+                SetRef(contents.GetComponent<NetworkRacer>(), "head", head);
+                PrefabUtility.SaveAsPrefabAsset(contents, path);
+            }
+            finally
+            {
+                PrefabUtility.UnloadPrefabContents(contents);
+            }
+
+            EditorUtility.DisplayDialog("Network Racer prefab",
+                $"{Path.GetFileName(path)} now syncs the scooter and the rider's head.\n\n" +
+                "Other players appear as a Lemon scooter with a rider in their scoreboard color, " +
+                "and everyone starts on their own grid slot (see the blue boxes behind the start line).", "OK");
+        }
+
         // ------------------------------------------------------------------ track
 
         private static string SetUpTrack()

@@ -8,6 +8,8 @@ public class LobbyMenu : MonoBehaviour
 {
     // MainPanel: Create / Join. JoinPanel: code keypad. LobbyPanel: code, player count, countdown.
     public GameObject MainPanel, JoinPanel, LobbyPanel;
+    // Inside LobbyPanel; shown only to the host, and only while the race can be started.
+    public GameObject StartRaceButton;
     public TMP_Text MainMessageText, CodeEntryText, JoinMessageText, LobbyCodeText;
     private string typedCode = "";
 
@@ -30,6 +32,9 @@ public class LobbyMenu : MonoBehaviour
             LobbyCodeText.text = $"Lobby code: {manager.LobbyCode}";
         }
         LobbyPanel.SetActive(inLobby);
+        // Everyone else reads "Waiting for the host to start..." on the countdown line instead.
+        var controller = FusionPlayerSpawnerAndLobbyController.Instance;
+        if (StartRaceButton) StartRaceButton.SetActive(inLobby && controller && controller.CanStartRace);
     }
 
     // Show Create / Join, with the reason we came back here (e.g. "That lobby is full.") if any.
@@ -79,6 +84,11 @@ public class LobbyMenu : MonoBehaviour
             return;
         }
         if (FusionNetworkManager.Instance) FusionNetworkManager.Instance.JoinLobby(typedCode);
+    }
+
+    public void StartRace()
+    {
+        if (FusionPlayerSpawnerAndLobbyController.Instance) FusionPlayerSpawnerAndLobbyController.Instance.StartRace();
     }
 
     public void LeaveLobby()

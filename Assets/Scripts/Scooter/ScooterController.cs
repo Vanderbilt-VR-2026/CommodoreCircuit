@@ -134,6 +134,18 @@ namespace CommodoreCircuit.Scooter
         [Tooltip("Acceleration is multiplied by this after a wall hit. Lower means a bigger drop.")]
         [SerializeField, Range(0.05f, 1f)] private float wallAccelerationMultiplier = 0.2f;
         [SerializeField] private float wallAccelerationPenaltyDuration = 1.2f;
+        [Tooltip("Block the scooter on ANY steep collider (buildings, props, barriers, other scooters), not only objects with a TrackWall component.")]
+        [SerializeField] private bool solidSteepSurfaces = true;
+        [Tooltip("Gap kept between the scooter body and a wall, in meters.")]
+        [SerializeField] private float wallSkin = 0.04f;
+        [Tooltip("Hits shallower than this (0 = scraping along, 1 = straight on) keep their speed, so brushing a barrier is forgiving.")]
+        [SerializeField, Range(0f, 1f)] private float wallPenaltyMinHeadOn = 0.3f;
+
+        [Header("Safety Net")]
+        [Tooltip("If the scooter ever drops below this height it is put back where it last had ground under it.")]
+        [SerializeField] private float fallResetHeight = -15f;
+        [Tooltip("Seconds with no ground under the scooter (driven off the map) before it is put back. 0 turns this off.")]
+        [SerializeField] private float noGroundResetTime = 1.5f;
 
         [Header("Ground")]
         [SerializeField] private float rideHeight = 0f;
@@ -174,6 +186,12 @@ namespace CommodoreCircuit.Scooter
         private float headingYaw;
         private Transform frontSteerPivot;
         private bool wasAgainstWall;
+        private Vector3 lastSafePosition;
+        private float lastSafeYaw;
+        private bool hasSafePosition;
+        private float noGroundTimer;
+        private static readonly RaycastHit[] castBuffer = new RaycastHit[32];
+        private static readonly Collider[] overlapBuffer = new Collider[32];
         private float wallPenaltyTimer;
 
         public enum BoostTier { None, Mini, Super, Ultra }
@@ -421,6 +439,32 @@ namespace CommodoreCircuit.Scooter
             isCalibrated = true;
         }
 
+        /// <summary>
+        /// Puts the scooter at a new spot, stopped and upright. Only the yaw of
+        /// <paramref name="rotation"/> is used. The next physics step snaps it to the ground.
+        /// Used by the race to put each player on their own grid slot.
+        /// </summary>
+        public void Teleport(Vector3 position, Quaternion rotation)
+        {
+            headingYaw = rotation.eulerAngles.y;
+            Quaternion upright = Quaternion.Euler(0f, headingYaw, 0f);
+            currentSpeed = 0f;
+            currentSlip = 0f;
+            currentLean = 0f;
+            leanVelocity = 0f;
+            driftCharge = 0f;
+            boostTimer = 0f;
+            IsDrifting = false;
+            ChargeTier = BoostTier.None;
+            wasAgainstWall = false;
+            wallPenaltyTimer = 0f;
+
+            transform.SetPositionAndRotation(position, upright);
+            if (rb == null) rb = GetComponent<Rigidbody>();
+            rb.position = position;
+            rb.rotation = upright;
+        }
+
         private void FixedUpdate()
         {
             float accelInput = accelerateAction.ReadValue<float>();
@@ -527,9 +571,39 @@ namespace CommodoreCircuit.Scooter
                 ? travel.normalized * currentSpeed * Time.fixedDeltaTime
                 : Vector3.zero;
             delta.y = 0f;
-            Vector3 next = rb.position + BounceOffWalls(delta);
+            // Walls are checked with the body box at its NEW heading. Turning or
+            // drifting swings the 1.4 m body sideways, and a sweep cannot see a
+            // wall it starts inside, so first push out of anything the turn
+            // swung us into, then sweep the move, then push out once more.
+            Quaternion collisionRotation = Quaternion.Euler(0f, headingYaw, 0f);
+            Vector3 start = rb.position + PushOutOfWalls(rb.position, collisionRotation);
+            Vector3 next = start + BounceOffWalls(start, collisionRotation, delta);
+            next += PushOutOfWalls(next, collisionRotation);
+
             if (TryGetGroundY(out float groundY))
+            {
                 next.y = groundY;
+                noGroundTimer = 0f;
+                lastSafePosition = next;
+                lastSafeYaw = headingYaw;
+                hasSafePosition = true;
+            }
+            else
+            {
+                noGroundTimer += Time.fixedDeltaTime;
+            }
+
+            // Safety net: fell through the world or drove off the map.
+            if (hasSafePosition
+                && (next.y < fallResetHeight || (noGroundResetTime > 0f && noGroundTimer > noGroundResetTime)))
+            {
+                next = lastSafePosition;
+                headingYaw = lastSafeYaw;
+                currentSpeed = 0f;
+                currentSlip = 0f;
+                boostTimer = 0f;
+                noGroundTimer = 0f;
+            }
 
             Vector3 facing = Quaternion.Euler(0f, headingYaw, 0f) * Vector3.forward;
             rb.MovePosition(next);
@@ -587,41 +661,155 @@ namespace CommodoreCircuit.Scooter
             BoostStarted?.Invoke(tier);
         }
 
-        private Vector3 BounceOffWalls(Vector3 delta)
+        /// <summary>Puts the scooter back where it last had ground under it.</summary>
+        public void ResetToLastSafePosition()
         {
-            float distance = delta.magnitude;
-            if (distance < 0.0001f || bodyCollider == null)
-            {
-                wasAgainstWall = false;
-                return delta;
-            }
-
-            if (!rb.SweepTest(delta / distance, out RaycastHit hit, distance, QueryTriggerInteraction.Ignore)
-                || hit.collider.GetComponentInParent<TrackWall>() == null)
-            {
-                wasAgainstWall = false;
-                return delta;
-            }
-
-            Vector3 normal = hit.normal;
-            normal.y = 0f;
-            if (normal.sqrMagnitude < 0.0001f)
-                normal = -delta / distance;
-            normal.Normalize();
-
-            float allowed = Mathf.Max(0f, hit.distance - 0.02f);
-            Vector3 stopped = delta.normalized * Mathf.Min(distance, allowed);
-            if (Vector3.Dot(stopped, normal) < 0f)
-                stopped = Vector3.ProjectOnPlane(stopped, normal);
-
-            if (wasAgainstWall)
-                return stopped;
-
-            currentSpeed *= wallSpeedRetention;
+            if (!hasSafePosition) return;
+            headingYaw = lastSafeYaw;
+            currentSpeed = 0f;
+            currentSlip = 0f;
             boostTimer = 0f;
-            wallPenaltyTimer = wallAccelerationPenaltyDuration;
-            wasAgainstWall = true;
-            return stopped + normal * wallBumpDistance;
+            rb.position = lastSafePosition;
+            rb.rotation = Quaternion.Euler(0f, lastSafeYaw, 0f);
+        }
+
+        // Moves by delta, stopping at walls and sliding along them. Up to three
+        // contacts per step, so corners (two walls at once) cannot leak.
+        private Vector3 BounceOffWalls(Vector3 start, Quaternion rotation, Vector3 delta)
+        {
+            if (delta.sqrMagnitude < 0.00000001f || bodyCollider == null)
+            {
+                wasAgainstWall = false;
+                return delta;
+            }
+
+            Vector3 moved = Vector3.zero;
+            Vector3 remaining = delta;
+            bool hitWall = false;
+            float headOn = 0f;
+            Vector3 bumpNormal = Vector3.zero;
+            Vector3 travelDir = delta.normalized;
+
+            for (int i = 0; i < 3; i++)
+            {
+                float distance = remaining.magnitude;
+                if (distance < 0.0001f) break;
+                Vector3 dir = remaining / distance;
+
+                if (!CastBody(start + moved, rotation, dir, distance + wallSkin, out RaycastHit hit))
+                {
+                    moved += remaining;
+                    break;
+                }
+
+                Vector3 normal = hit.normal;
+                normal.y = 0f;
+                if (normal.sqrMagnitude < 0.0001f) normal = -dir;
+                normal.Normalize();
+
+                float allowed = Mathf.Min(distance, Mathf.Max(0f, hit.distance - wallSkin));
+                moved += dir * allowed;
+
+                hitWall = true;
+                headOn = Mathf.Max(headOn, Mathf.Clamp01(-Vector3.Dot(travelDir, normal)));
+                bumpNormal = normal;
+
+                Vector3 leftover = dir * (distance - allowed);
+                remaining = Vector3.ProjectOnPlane(leftover, normal);
+                remaining.y = 0f;
+            }
+
+            if (hitWall && !wasAgainstWall && headOn >= wallPenaltyMinHeadOn)
+            {
+                // Straight-on hits lose the full amount; glancing hits lose less.
+                currentSpeed *= Mathf.Lerp(1f, wallSpeedRetention, headOn);
+                if (headOn > 0.5f) boostTimer = 0f;
+                wallPenaltyTimer = wallAccelerationPenaltyDuration * headOn;
+                moved += bumpNormal * wallBumpDistance * headOn;
+            }
+
+            wasAgainstWall = hitWall;
+            return moved;
+        }
+
+        private void GetBodyBox(Vector3 position, Quaternion rotation, out Vector3 center, out Vector3 halfExtents)
+        {
+            Vector3 scale = transform.lossyScale;
+            center = position + rotation * Vector3.Scale(bodyCollider.center, scale);
+            halfExtents = Vector3.Scale(bodyCollider.size, scale) * 0.5f;
+        }
+
+        // True if this collider should stop the scooter.
+        private bool IsBlocker(Collider other, Vector3 normal)
+        {
+            if (other == null || other.isTrigger) return false;
+            Transform t = other.transform;
+            if (t == transform || t.IsChildOf(transform)) return false;
+            if (other.GetComponentInParent<TrackWall>() != null) return true;
+            if (!solidSteepSurfaces) return false;
+            // Ground and ramps are walkable; steep faces are walls.
+            return Mathf.Abs(normal.y) < 0.6f;
+        }
+
+        private bool CastBody(Vector3 position, Quaternion rotation, Vector3 dir, float distance, out RaycastHit closest)
+        {
+            closest = default;
+            GetBodyBox(position, rotation, out Vector3 center, out Vector3 half);
+            // Shrink a hair so the box does not snag on the ground it rides over.
+            half -= Vector3.one * 0.01f;
+            int count = Physics.BoxCastNonAlloc(center, half, dir, castBuffer, rotation, distance, ~0, QueryTriggerInteraction.Ignore);
+            float best = float.MaxValue;
+            bool found = false;
+            for (int i = 0; i < count; i++)
+            {
+                RaycastHit h = castBuffer[i];
+                // Distance 0 means we started inside it; PushOutOfWalls handles that.
+                if (h.distance <= 0f && h.point == Vector3.zero) continue;
+                if (!IsBlocker(h.collider, h.normal)) continue;
+                if (h.distance < best)
+                {
+                    best = h.distance;
+                    closest = h;
+                    found = true;
+                }
+            }
+            return found;
+        }
+
+        // Returns the horizontal offset that moves the body box out of any wall it overlaps.
+        private Vector3 PushOutOfWalls(Vector3 position, Quaternion rotation)
+        {
+            if (bodyCollider == null) return Vector3.zero;
+            Vector3 total = Vector3.zero;
+
+            for (int pass = 0; pass < 3; pass++)
+            {
+                GetBodyBox(position + total, rotation, out Vector3 center, out Vector3 half);
+                int count = Physics.OverlapBoxNonAlloc(center, half, overlapBuffer, rotation, ~0, QueryTriggerInteraction.Ignore);
+                bool pushed = false;
+
+                for (int i = 0; i < count; i++)
+                {
+                    Collider other = overlapBuffer[i];
+                    if (other == bodyCollider) continue;
+                    if (!Physics.ComputePenetration(
+                            bodyCollider, position + total, rotation,
+                            other, other.transform.position, other.transform.rotation,
+                            out Vector3 dir, out float depth))
+                        continue;
+                    if (!IsBlocker(other, dir)) continue;
+
+                    Vector3 flat = new Vector3(dir.x, 0f, dir.z);
+                    if (flat.sqrMagnitude < 0.0001f) continue;
+                    flat.Normalize();
+                    total += flat * (depth + 0.01f);
+                    pushed = true;
+                }
+
+                if (!pushed) break;
+            }
+
+            return total;
         }
 
         private void SetupWheelVisuals()

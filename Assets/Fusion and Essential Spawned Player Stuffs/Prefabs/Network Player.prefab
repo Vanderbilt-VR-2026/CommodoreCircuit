@@ -620,7 +620,6 @@ GameObject:
   - component: {fileID: 4492543089198509801}
   - component: {fileID: 9033798945215467100}
   - component: {fileID: 1629496386487407874}
-  - component: {fileID: 6941120259370531990}
   m_Layer: 0
   m_Name: Network Player
   m_TagString: Untagged
@@ -742,7 +741,6 @@ MonoBehaviour:
   - {fileID: 9033798945215467100}
   - {fileID: 3091591767578648672}
   - {fileID: 1629496386487407874}
-  - {fileID: 6941120259370531990}
   - {fileID: 2470653021265241310}
   - {fileID: 2077464846767201479}
   - {fileID: 6406758778535878969}
@@ -807,26 +805,6 @@ MonoBehaviour:
   BulletPrefab: {fileID: 1055626049511969161, guid: 8d11baec664464ce78f37c3184b922fd, type: 3}
   ShotDelay: 0.25
   MuzzleDistance: 0.12
---- !u!114 &6941120259370531990
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 7701784339999434686}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: c4af0c647f34949bc9f8aa83a8c49363, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::CommodoreCircuit.Race.NetworkRacer
-  _Distance: 0
-  _CompletedLaps: 0
-  _Finished:
-    RawValue: 0
-  _FinishTime: 0
-  _BestLap: 0
-  _Ready:
-    RawValue: 0
 --- !u!1 &7858100408922421796
 GameObject:
   m_ObjectHideFlags: 0
