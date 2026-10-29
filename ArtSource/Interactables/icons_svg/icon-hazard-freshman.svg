@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+
+<circle cx="256" cy="256" r="234" fill="#141414"/>
+<circle cx="256" cy="256" r="222" fill="#FFC72C"/>
+<path d="M256 34 A222 222 0 0 1 478 256 L462 256 A206 206 0 0 0 256 50 Z" fill="#C9961A" opacity="0.55" transform="rotate(90 256 256)"/>
+<path d="M70 200 A190 190 0 0 1 200 66" fill="none" stroke="#FFFFFF" stroke-width="10" stroke-linecap="round" opacity="0.75"/>
+<circle cx="256" cy="256" r="184" fill="#141414"/>
+<path d="M118 190 A150 150 0 0 1 220 104" fill="none" stroke="#3a3a3a" stroke-width="14" stroke-linecap="round"/>
+<circle cx="80" cy="256" r="7" fill="#FFFFFF" opacity="0.8"/>
+
+<path d="M226 170 Q226 132 256 132 Q288 132 288 160 Q288 180 262 188 L262 206" fill="none" stroke="#141414" stroke-width="32" stroke-linecap="round"/>
+<path d="M226 170 Q226 132 256 132 Q288 132 288 160 Q288 180 262 188 L262 206" fill="none" stroke="#FFC72C" stroke-width="18" stroke-linecap="round"/>
+<circle cx="262" cy="232" r="12" fill="#FFC72C" stroke="#141414" stroke-width="8" stroke-linejoin="round" paint-order="stroke"/>
+<rect x="222" y="330" width="22" height="58" rx="6" fill="#141414" stroke="#FFC72C" stroke-width="6"/>
+<rect x="268" y="330" width="22" height="58" rx="6" fill="#141414" stroke="#FFC72C" stroke-width="6"/>
+<ellipse cx="228" cy="392" rx="24" ry="13" fill="#FFFFFF" stroke="#FFC72C" stroke-width="9" stroke-linejoin="round" paint-order="stroke"/>
+<ellipse cx="286" cy="392" rx="24" ry="13" fill="#FFFFFF" stroke="#FFC72C" stroke-width="9" stroke-linejoin="round" paint-order="stroke"/>
+<g transform="rotate(-6 256 300)">
+  <rect x="150" y="250" width="212" height="118" rx="6" fill="#FFFFFF" stroke="#FFC72C" stroke-width="9" stroke-linejoin="round" paint-order="stroke"/>
+  <path d="M203 252 V366 M256 252 V366 M309 252 V366 M152 309 H360" stroke="#C9BE9A" stroke-width="5"/>
+  <rect x="166" y="320" width="34" height="26" fill="#27AE60"/>
+  <path d="M170 350 L210 300 L246 330 L284 284 L330 300" fill="none" stroke="#FF3131" stroke-width="7" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="14 10"/>
+  <circle cx="334" cy="298" r="9" fill="#FF3131"/>
+</g>
+
+</svg>

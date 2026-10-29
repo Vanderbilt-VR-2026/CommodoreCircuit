@@ -8,9 +8,15 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/Scenes/Lobby Scene.unity
     guid: fcab7254740724375b2b33bfddc54344
-  - enabled: 1
+  - enabled: 0
     path: Assets/Scenes/Game Scene.unity
     guid: c9b7e9ef7edfe4f39bd92dba12763dee
+  - enabled: 1
+    path: Assets/Scenes/Campus Track Scene.unity
+    guid: e8fa1b2cdd0404e738e180b8afd2125c
+  - enabled: 0
+    path: Assets/Lobby.unity
+    guid: daf13f62c1b124d438997104e3a3f020
   m_configObjects:
     com.unity.dt.app-ui: {fileID: 11400000, guid: 1b1c20d82303e4b5781c3ef50ac1449f, type: 2}
     com.unity.input.settings.actions: {fileID: -944628639613478452, guid: 052faaac586de48259a63d0c4782560b, type: 3}
