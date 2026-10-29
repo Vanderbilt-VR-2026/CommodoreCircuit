@@ -11,7 +11,6 @@ Players meet in a VR classroom, join a lobby with a code, and race scooters arou
 ## Contents
 
 - [Requirements](#requirements)
-- [Install the Game](#install-the-game)
 - [Play](#play)
 - [Controls](#controls)
 - [Build from Source](#build-from-source)
@@ -22,7 +21,7 @@ Players meet in a VR classroom, join a lobby with a code, and race scooters arou
 
 ## Requirements
 
-- A **Meta Quest** headset (Quest 2, 3, or 3S) with **Developer Mode** turned on (see [one-time setup](#one-time-setup-developer-mode))
+- A **Meta Quest** headset (Quest 2, 3, or 3S) with **Developer Mode** turned on
 - A computer (Mac or Windows) and a **USB-C data cable** (some charge-only cables won't work)
 - One of these free install tools:
   - [Meta Quest Developer Hub (MQDH)](https://developers.meta.com/horizon/documentation/unity/ts-mqdh/), recommended
@@ -30,29 +29,6 @@ Players meet in a VR classroom, join a lobby with a code, and race scooters arou
   - `adb` from the Android SDK (included with Unity's Android Build Support)
 - An **internet connection** on the headset. Lobbies and races run online through Photon.
 - **Two or more headsets** for a multiplayer race. One headset works for exploring the lobby.
-
----
-
-## Install the Game
-
-### One-time setup: Developer Mode
-
-You only need to do this once per headset.
-
-1. Create a free developer organization at [developers.meta.com/horizon](https://developers.meta.com/horizon) with the **same Meta account** as the headset.
-2. In the **Meta Horizon** app on your phone, go to **Devices** → your headset → **Headset settings** → **Developer Mode** and turn it on.
-3. Restart the headset.
-
-### Install the APK
-
-1. Download the latest build: **[Sprint3.apk](https://vanderbilt365-my.sharepoint.com/:f:/g/personal/knathifa_l_cambridge_vanderbilt_edu/IgA9IiQ7uj5YSL_Xj5EwE2QCAfGBX40-DTcwQjQOiXzZqeY?e=32jeNv)** (Vanderbilt OneDrive)
-2. Plug the headset into your computer, put it on, and choose **Allow** on the **"Allow USB debugging?"** prompt.
-   Check **Always allow from this computer** so you don't get asked again.
-3. Install the APK with one of these:
-   - **MQDH:** select your headset, open **Apps**, and drag `Sprint3.apk` onto the window
-   - **SideQuest:** click the **Install APK** button (box with a down arrow) at the top and choose `Sprint3.apk`
-   - **adb:** `adb install -r Sprint3.apk`
-4. In the headset, open the **Library**, change the filter to **Unknown Sources**, and launch **CommodoreCircuit**.
 
 ---
 
