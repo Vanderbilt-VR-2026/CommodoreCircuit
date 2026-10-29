@@ -13,7 +13,6 @@ Players meet in a VR classroom, join a lobby with a code, and race scooters arou
 - [Requirements](#requirements)
 - [Play](#play)
 - [Controls](#controls)
-- [Build from Source](#build-from-source)
 - [Sprint Builds and Write-ups](#sprint-builds-and-write-ups)
 - [Developers/Roles](#developersroles)
 
@@ -75,26 +74,6 @@ If the handlebar ends up in the wrong spot, click either thumbstick to move it b
 | Left menu button (☰)                   | Pause menu (left stick to move, A or right trigger to choose) |
 | Right controller + trigger             | Point at and press buttons on the lobby chalkboard            |
 | Keyboard W / S / A·D / Space / R / Esc | Editor testing: go / brake / steer / drift / recenter / pause |
-
----
-
-## Build from Source
-
-1. Install **Unity 6000.3.23f1** from Unity Hub with **Android Build Support** (including OpenJDK and Android SDK & NDK).
-2. Clone the repository and open the folder in Unity Hub:
-   ```bash
-   git clone https://github.com/Vanderbilt-VR-2026/CommodoreCircuit.git
-   ```
-3. Go to **File → Build Profiles**, choose **Android**, and click **Switch Platform** if it isn't already selected.
-4. Check that the scenes are listed in this order: `Scenes/Lobby Scene`, `Scenes/Game Scene`, `Scenes/Campus Track Scene`.
-5. Plug in your headset, pick it under **Run Device**, and click **Build And Run**.
-
-The Photon app IDs for networking are already in `Assets/Photon/Fusion/Resources/PhotonAppSettings.asset`, so multiplayer works without extra setup.
-
-**Solo testing:** in `Lobby Scene`, select the object with **FusionPlayerSpawnerAndLobbyController** and set **Minimum Players** to 1. The race will
-then start with one headset. Set it back to 2 before building for a real multiplayer test.
-
-**Editor testing without a headset:** press Play in the Editor and drive with the keyboard (see [All Controls](#all-controls)).
 
 ---
 
