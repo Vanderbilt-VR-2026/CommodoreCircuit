@@ -19,12 +19,12 @@ Players meet in a VR classroom, join a lobby with a code, and race scooters arou
 
 ## Sprint Overview
 
-| Sprint   | Focus                                                          | Video                         | Build                     |
-| -------- | -------------------------------------------------------------- | ----------------------------- | ------------------------- |
-| Sprint 1 | Project setup, scooter prototype, design language              | [Sprint 1 video](https://drive.google.com/file/d/1OvjzkMCDrDujInlI412jbCorAFXqfw4g/view?usp=sharing)        | [Sprint1.apk](https://vanderbilt365-my.sharepoint.com/:u:/g/personal/knathifa_l_cambridge_vanderbilt_edu/IQD3QxGlTYyYSLAkvOZclbNsAQUnzUqWt1OGWfDIDUsNgjI?e=RBmTVM)       |
-| Sprint 2 | Scooter driving, campus track, multiplayer lobby               | [Sprint 2 video](https://drive.google.com/file/d/1zbQ5yVL8Acbf7EDj6khqVg-LF22HKVvM/view?usp=sharing)        | [Sprint2.apk](https://vanderbilt365-my.sharepoint.com/:u:/g/personal/knathifa_l_cambridge_vanderbilt_edu/IQCcZSu9Oj8_TJ8FN54l0i2mAZUfM2zG1rn8rijY87jUv6s?e=LtUo2T)       |
-| Sprint 3 | Full race loop, multiplayer race, Alumni Lawn track, new lobby | _Sprint 3 video (coming soon)_ | [Sprint3.apk](https://vanderbilt365-my.sharepoint.com/:f:/g/personal/knathifa_l_cambridge_vanderbilt_edu/IgA9IiQ7uj5YSL_Xj5EwE2QCAfGBX40-DTcwQjQOiXzZqeY?e=32jeNv)       |
-| Sprint 4 | Visible opponents, race fixes, diegetic HUD, map, music        | Planned                       | Planned                   |
+| Sprint   | Focus                                                          | Video                                                                                                | Build                                                                                                                                                              |
+| -------- | -------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Sprint 1 | Project setup, scooter prototype, design language              | [Sprint 1 video](https://drive.google.com/file/d/1OvjzkMCDrDujInlI412jbCorAFXqfw4g/view?usp=sharing) | [Sprint1.apk](https://vanderbilt365-my.sharepoint.com/:u:/g/personal/knathifa_l_cambridge_vanderbilt_edu/IQD3QxGlTYyYSLAkvOZclbNsAQUnzUqWt1OGWfDIDUsNgjI?e=RBmTVM) |
+| Sprint 2 | Scooter driving, campus track, multiplayer lobby               | [Sprint 2 video](https://drive.google.com/file/d/1zbQ5yVL8Acbf7EDj6khqVg-LF22HKVvM/view?usp=sharing) | [Sprint2.apk](https://vanderbilt365-my.sharepoint.com/:u:/g/personal/knathifa_l_cambridge_vanderbilt_edu/IQCcZSu9Oj8_TJ8FN54l0i2mAZUfM2zG1rn8rijY87jUv6s?e=LtUo2T) |
+| Sprint 3 | Full race loop, multiplayer race, Alumni Lawn track, new lobby | _Sprint 3 video (coming soon)_                                                                       | [Sprint3.apk](https://vanderbilt365-my.sharepoint.com/:f:/g/personal/knathifa_l_cambridge_vanderbilt_edu/IgA9IiQ7uj5YSL_Xj5EwE2QCAfGBX40-DTcwQjQOiXzZqeY?e=32jeNv) |
+| Sprint 4 | Visible opponents, race fixes, diegetic HUD, map, music        | Planned                                                                                              | Planned                                                                                                                                                            |
 
 ---
 
@@ -57,18 +57,18 @@ If the handlebar ends up in the wrong spot, click either thumbstick to move it b
 
 ### All Controls
 
-| Input                                    | Action                                                        |
-| ---------------------------------------- | ------------------------------------------------------------- |
-| Grip on both hands                       | Grab the handlebar                                            |
-| Twist the handlebar                      | Steer                                                         |
-| Left trigger                             | Go                                                            |
-| Right trigger                            | Brake, then reverse                                           |
-| A (or X)                                 | Drift while turning (let go for a boost)                      |
-| Click either thumbstick                  | Recenter the handlebar to your hands                          |
-| Right stick up / down (while stopped)    | Raise or lower your rider height                              |
-| Left menu button (☰)                     | Pause menu (left stick to move, A or right trigger to choose) |
-| Right controller + trigger               | Point at and press buttons on the lobby chalkboard            |
-| Keyboard W / S / A·D / Space / R / Esc   | Editor testing: go / brake / steer / drift / recenter / pause |
+| Input                                  | Action                                                        |
+| -------------------------------------- | ------------------------------------------------------------- |
+| Middle finger trigger on both hands    | Grab the handlebar                                            |
+| Twist the handlebar                    | Steer                                                         |
+| Left trigger                           | Go                                                            |
+| Right trigger                          | Brake, then reverse                                           |
+| A (or X)                               | Drift while turning (let go for a boost)                      |
+| Click either thumbstick                | Recenter the handlebar to your hands                          |
+| Right stick up / down (while stopped)  | Raise or lower your rider height                              |
+| Left menu button (☰)                   | Pause menu (left stick to move, A or right trigger to choose) |
+| Right controller + trigger             | Point at and press buttons on the lobby chalkboard            |
+| Keyboard W / S / A·D / Space / R / Esc | Editor testing: go / brake / steer / drift / recenter / pause |
 
 ---
 
