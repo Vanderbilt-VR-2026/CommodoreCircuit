@@ -126,7 +126,8 @@ namespace CommodoreCircuit.EditorTools
             GameObject temp = (GameObject)PrefabUtility.InstantiatePrefab(fbx);
             PrefabUtility.UnpackPrefabInstance(temp, PrefabUnpackMode.Completely, InteractionMode.AutomatedAction);
             temp.transform.position = Vector3.zero;
-            temp.transform.rotation = Quaternion.identity;
+            // keep the FBX root's own rotation: for a single-mesh FBX it holds the Blender->Unity
+            // axis fix (-90 on X), and zeroing it lays the model on its side
 
             Transform part = null;
             // The FBX root often has the same name as the mesh inside it, so skip the root
@@ -444,6 +445,9 @@ namespace CommodoreCircuit.EditorTools
             mi.importLights = false;
             mi.importAnimation = false;
             mi.animationType = ModelImporterAnimationType.None;
+            // Single-object Blender exports keep their "stand up" rotation on the root node, which
+            // Unity drops; baking the axis conversion into the mesh keeps them upright.
+            if (assetPath.EndsWith("CarmichaelCollegeExterior.fbx")) mi.bakeAxisConversion = true;
         }
     }
 }
