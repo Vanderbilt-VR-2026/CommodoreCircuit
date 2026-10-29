@@ -16,6 +16,8 @@
 
 [Sprint 1 video](https://drive.google.com/file/d/1OvjzkMCDrDujInlI412jbCorAFXqfw4g/view?usp=sharing)
 
+[Sprint 2 video](https://drive.google.com/file/d/1zbQ5yVL8Acbf7EDj6khqVg-LF22HKVvM/view?usp=sharing)
+
 ### Sprint Goals
 
 - Set up the Unity project for Meta Quest VR development
