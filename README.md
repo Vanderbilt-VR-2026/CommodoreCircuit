@@ -1,11 +1,14 @@
 # CommodoreCircuit
 
-**The objective of this project is to create a Mario-Kart based racing game that is lore-accurate to Vanderbilt's unique environment on VR**
+**A Mario Kart-style VR racing game for Meta Quest, set on a lore-accurate version of Vanderbilt's campus.**
+
+Players meet in a VR classroom, join a lobby with a code, and race scooters around campus together.
 
 ---
 
 ## Contents
 
+- [Sprint Overview](#sprint-overview)
 - [Developers/Roles](#developersroles)
 - [Controls](#controls)
 - [How to Test (latest build)](#how-to-test-latest-build)
@@ -14,12 +17,14 @@
 - [Sprint 3 (due October 29)](#sprint-3-due-october-29)
 - [Sprint 4 Plan](#sprint-4-plan)
 
-| Sprint   | Focus                                                         | Video                                                                                           | Build       |
-| -------- | ------------------------------------------------------------- | ----------------------------------------------------------------------------------------------- | ----------- |
-| Sprint 1 | Project setup, scooter prototype, design language             | [Sprint 1 video](https://drive.google.com/file/d/1OvjzkMCDrDujInlI412jbCorAFXqfw4g/view?usp=sharing) | n/a         |
-| Sprint 2 | Scooter driving, campus track, multiplayer lobby              | [Sprint 2 video](https://drive.google.com/file/d/1zbQ5yVL8Acbf7EDj6khqVg-LF22HKVvM/view?usp=sharing) | Sprint2.apk |
-| Sprint 3 | Full race loop, multiplayer race, Alumni Lawn track, new lobby | [Sprint 3 video]([link])                                                                         | [Sprint3.apk]([link]) |
-| Sprint 4 | Visible opponents, race fixes, diegetic HUD, map, music       | Planned                                                                                         | Planned     |
+## Sprint Overview
+
+| Sprint   | Focus                                                          | Video                         | Build                     |
+| -------- | -------------------------------------------------------------- | ----------------------------- | ------------------------- |
+| Sprint 1 | Project setup, scooter prototype, design language              | [Sprint 1 video](https://drive.google.com/file/d/1OvjzkMCDrDujInlI412jbCorAFXqfw4g/view?usp=sharing)        | [Sprint1.apk](https://vanderbilt365-my.sharepoint.com/:u:/g/personal/knathifa_l_cambridge_vanderbilt_edu/IQD3QxGlTYyYSLAkvOZclbNsAQUnzUqWt1OGWfDIDUsNgjI?e=RBmTVM)       |
+| Sprint 2 | Scooter driving, campus track, multiplayer lobby               | [Sprint 2 video](https://drive.google.com/file/d/1zbQ5yVL8Acbf7EDj6khqVg-LF22HKVvM/view?usp=sharing)        | [Sprint2.apk](https://vanderbilt365-my.sharepoint.com/:u:/g/personal/knathifa_l_cambridge_vanderbilt_edu/IQCcZSu9Oj8_TJ8FN54l0i2mAZUfM2zG1rn8rijY87jUv6s?e=LtUo2T)       |
+| Sprint 3 | Full race loop, multiplayer race, Alumni Lawn track, new lobby | [Sprint 3 video]([link])      | [Sprint3.apk](https://vanderbilt365-my.sharepoint.com/:f:/g/personal/knathifa_l_cambridge_vanderbilt_edu/IgA9IiQ7uj5YSL_Xj5EwE2QCAfGBX40-DTcwQjQOiXzZqeY?e=32jeNv)       |
+| Sprint 4 | Visible opponents, race fixes, diegetic HUD, map, music        | Planned                       | Planned                   |
 
 ---
 
@@ -27,11 +32,11 @@
 
 | Member             | Major(s)           | Skills                                        | Role                                             |
 | ------------------ | ------------------ | --------------------------------------------- | ------------------------------------------------ |
-| Ty Levine          | CMA, Econ, Spanish | Storyboarding, adobe, writing, presentation   | Designing scenes, communications                 |
+| Ty Levine          | CMA, Econ, Spanish | Storyboarding, Adobe, writing, presentation   | Designing scenes, communications                 |
 | Joshua Jung        | Music, CS          | Frontend, Backend, React, Node, Java, JS      | Networking, Backend development, Asset managing  |
 | Grayson Smith      | CS, Math           | Frontend, Backend, React, Figma, JS/TS, Java  | Design Director                                  |
 | Alex Pearle        | CS, Math           | Unity, Frontend, Backend, Python, C++         | Develop Game assets/physics, Backend development |
-| Knathifa Cambridge | CS                 | C++, Python, Storyboarding, Debugging, HCI/UX | Github Management, Asset development             |
+| Knathifa Cambridge | CS                 | C++, Python, Storyboarding, Debugging, HCI/UX | GitHub management, Asset development             |
 
 ---
 
@@ -52,7 +57,7 @@
 
 ## How to Test (latest build)
 
-1. Download the Sprint 3 APK: [link]
+1. Download the Sprint 3 APK: [Sprint3.apk](https://vanderbilt365-my.sharepoint.com/:f:/g/personal/knathifa_l_cambridge_vanderbilt_edu/IgA9IiQ7uj5YSL_Xj5EwE2QCAfGBX40-DTcwQjQOiXzZqeY?e=32jeNv) (Vanderbilt OneDrive)
 2. Install it on a Quest with SideQuest or Meta Quest Developer Hub, or run `adb install Sprint3.apk`
 3. Open **Commodore Circuit** from Unknown Sources in your Quest library
 4. In the classroom, point the right controller at the chalkboard and pull the trigger on **Create Lobby**
@@ -65,7 +70,7 @@
 
 ## Sprint 1
 
-[Sprint 1 video](https://drive.google.com/file/d/1OvjzkMCDrDujInlI412jbCorAFXqfw4g/view?usp=sharing)
+[Sprint 1 video](https://drive.google.com/file/d/1OvjzkMCDrDujInlI412jbCorAFXqfw4g/view?usp=sharing) · [Sprint 1 APK](https://vanderbilt365-my.sharepoint.com/:u:/g/personal/knathifa_l_cambridge_vanderbilt_edu/IQD3QxGlTYyYSLAkvOZclbNsAQUnzUqWt1OGWfDIDUsNgjI?e=RBmTVM)
 
 ### Sprint 1 Goals
 
@@ -76,7 +81,7 @@
 
 ### Sprint 1: What We Completed
 
-#### Project Setup (Joshua, [Knathifa])
+#### Project Setup (Joshua, Knathifa, Grayson)
 
 - Created the Unity project and GitHub repository with a branch per team member
 - Added the XR modules and SDKs needed for Quest: OpenXR, XR Interaction Toolkit, and Android build support
@@ -109,9 +114,9 @@
 | ------------------ | -------------------------------------------------------------------------------------------- |
 | Ty Levine          | Design language document and visual assets (logos, UI/HUD mockups); Sprint 1 video           |
 | Joshua Jung        | XR modules and SDK setup; README with roles and project description; reviewed and merged PRs |
-| Grayson Smith      | [Design direction for the design language / ...]                                             |
+| Grayson Smith      | GitHub setup and initialization                                                              |
 | Alex Pearle        | Scooter acceleration and drift physics, VR rig, test track and wall bump                     |
-| Knathifa Cambridge | [GitHub setup and initial Unity project / design assets / ...]                               |
+| Knathifa Cambridge | GitHub setup and initialization                                                              |
 
 ### Sprint 1: Challenges and How We Solved Them
 
@@ -136,7 +141,7 @@
 
 ## Sprint 2
 
-[Sprint 2 video](https://drive.google.com/file/d/1zbQ5yVL8Acbf7EDj6khqVg-LF22HKVvM/view?usp=sharing)
+[Sprint 2 video](https://drive.google.com/file/d/1zbQ5yVL8Acbf7EDj6khqVg-LF22HKVvM/view?usp=sharing) · [Sprint 2 APK](https://vanderbilt365-my.sharepoint.com/:u:/g/personal/knathifa_l_cambridge_vanderbilt_edu/IQCcZSu9Oj8_TJ8FN54l0i2mAZUfM2zG1rn8rijY87jUv6s?e=LtUo2T)
 
 ### Sprint 2 Goals
 
@@ -165,8 +170,8 @@
 
 #### Vanderbilt Assets (Knathifa, Grayson)
 
-- **Buildings:** Vanderbilt-specific campus buildings to line the track [list which ones, e.g. Kirkland Hall, ...]
-- **Outdoor objects:** campus props such as [benches, lamp posts, trees, signs, ...]
+- **Buildings:** Vanderbilt-specific campus buildings to line the track (Alumni Hall, EBI Tower, McGill)
+- **Outdoor objects:** campus props such as lamp posts, trees, trash cans, a Rand cookie, and a frisbee
 - **Interactable characters:** squirrels and students that bring the campus to life and that players can interact with on the track
 
 #### Multiplayer Networking (Joshua)
@@ -199,13 +204,13 @@
 
 ### Sprint 2: Who Did What
 
-| Member             | Sprint 2 Contributions                                                                                                                           |
-| ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------ |
-| Ty Levine          | Edited and assembled the presentation video; photographed the Vanderbilt track route as reference for the Unity campus                           |
-| Joshua Jung        | Networking (Fusion + Voice), lobby codes, classroom lobby, chalkboard/laser menu, Lobby → Campus transition, comfort/controller tuning, grass terrain |
+| Member             | Sprint 2 Contributions                                                                                                                                   |
+| ------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Ty Levine          | Edited and assembled the presentation video; photographed the Vanderbilt track route as reference for the Unity campus                                   |
+| Joshua Jung        | Networking (Fusion + Voice), lobby codes, classroom lobby, chalkboard/laser menu, Lobby → Campus transition, comfort/controller tuning, grass terrain    |
 | Grayson Smith      | Designed Vanderbilt buildings, outdoor objects, and interactable characters (squirrels, students); Android/XR build configuration; PR reviews and merges |
-| Alex Pearle        | Lemon scooter, drift boost, VR handlebar steering, Vanderbilt campus track                                                                       |
-| Knathifa Cambridge | Designed Vanderbilt buildings, outdoor objects, and interactable characters (squirrels, students)                                                |
+| Alex Pearle        | Lemon scooter, drift boost, VR handlebar steering, Vanderbilt campus track                                                                               |
+| Knathifa Cambridge | Designed Vanderbilt buildings, outdoor objects, and interactable characters (squirrels, students)                                                        |
 
 ### Sprint 2: Challenges and How We Solved Them
 
@@ -240,7 +245,7 @@
 
 ## Sprint 3 (due October 29)
 
-[Sprint 3 video]([link]) · [Sprint 3 APK]([link])
+[Sprint 3 video]([link]) · [Sprint 3 APK](https://vanderbilt365-my.sharepoint.com/:f:/g/personal/knathifa_l_cambridge_vanderbilt_edu/IgA9IiQ7uj5YSL_Xj5EwE2QCAfGBX40-DTcwQjQOiXzZqeY?e=32jeNv)
 
 ### Sprint 3 Goals
 
@@ -253,15 +258,15 @@
 
 ### Sprint 3: Goal Check
 
-| Goal (from the Sprint 2 plan)                    | Status                                                                               |
-| ------------------------------------------------ | ------------------------------------------------------------------------------------ |
+| Goal (from the Sprint 2 plan)                    | Status                                                                                |
+| ------------------------------------------------ | ------------------------------------------------------------------------------------- |
 | Race HUD, standings, lap counter (Grayson)       | ✅ Done: countdown, timer, laps, wrong way, FINISH banner, results board              |
 | Further motion sickness work (Joshua)            | ✅ Done: controller changes and comfort vignette tuning                               |
 | More Vanderbilt track details (Knathifa, Ty)     | ✅ Done: Alumni Lawn track with real buildings, barriers, and the Carmichael overhang |
 | Scooter collisions with walls (Alex, Knathifa)   | ✅ Done: barrier walls the scooter bounces off, plus a scooter wall fix               |
 | Players visible to each other in a race (Joshua) | 🟡 In progress: works in the lobby; scooters on the track still need fixing           |
-| Sprint 3 video (Ty)                              | 🟡 Recording now                                                                      |
-| AI bots to fill empty spots (Joshua)             | ⏸️ Not started; we focused on getting real players racing first                        |
+| Sprint 3 video (Ty)                              | 🟡 In progress: recording gameplay for the Sprint 3 presentation                      |
+| AI bots to fill empty spots (Joshua)             | ⏸️ Not started; we focused on getting real players racing first                       |
 | Collisions with other players (Alex)             | ⏸️ Not started; depends on players being visible on the track                         |
 
 ### Sprint 3: What We Completed
@@ -325,13 +330,13 @@
 
 ### Sprint 3: Who Did What
 
-| Member             | Sprint 3 Contributions                                                                                                                       |
-| ------------------ | -------------------------------------------------------------------------------------------------------------------------------------------- |
-| Ty Levine          | Game soundtracks (in progress); Sprint 3 video                                                                                               |
+| Member             | Sprint 3 Contributions                                                                                                                                     |
+| ------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Ty Levine          | Game soundtracks (in progress); Sprint 3 video                                                                                                             |
 | Joshua Jung        | Multiplayer race and shared standings, other racers' visuals, pause menu, new classroom lobby, network/XR tuning, comfort, merging the track and race code |
-| Grayson Smith      | Race game loop: track and lap tracking, countdown, timer, lap and wrong-way HUD, finish banner, results board, networked race session         |
-| Alex Pearle        | Alumni Lawn scenery built from OpenStreetMap data                                                                                            |
-| Knathifa Cambridge | Alumni Lawn race track, barrier tool, Carmichael overhang, Blender campus models and model swap, scooter wall fix                            |
+| Grayson Smith      | Race game loop: track and lap tracking, countdown, timer, lap and wrong-way HUD, finish banner, results board, networked race session                      |
+| Alex Pearle        | Alumni Lawn scenery built from OpenStreetMap data                                                                                                          |
+| Knathifa Cambridge | Alumni Lawn race track, barrier tool, Carmichael overhang, Blender campus models and model swap, scooter wall fix                                          |
 
 ### Sprint 3: Challenges and How We Solved Them
 
@@ -352,7 +357,6 @@
 - Players can **spawn on top of each other** at the start; the starting grid positions need to be spread out
 - The **pause menu button** needs fixing
 - Some racing bugs are still being fixed
-- [Assets not yet imported into the track]
 
 ---
 
@@ -366,10 +370,10 @@
 - Add a campus map that shows where everyone is
 - Add music to the game
 
-| Member             | Sprint 4 Plan                                                                                                                         |
-| ------------------ | ------------------------------------------------------------------------------------------------------------------------------------- |
+| Member             | Sprint 4 Plan                                                                                                                                                      |
+| ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | Joshua Jung        | Show opponents on their scooters during the race; spread out the starting positions so no one spawns on top of each other; fix race bugs and the pause menu button |
-| Knathifa Cambridge | Add a racing outline to Alex's updated campus scene                                                                                   |
-| Alex Pearle        | Move Grayson's timer, lap count, and other race info onto the scooter for a diegetic experience                                       |
-| Grayson Smith      | Add a map that shows each player's position on campus. It may be non-diegetic at first; we'll decide as a team.                       |
-| Ty Levine          | Upload soundtracks to the shared OneDrive and add music to the game; Sprint 4 video                                                   |
+| Knathifa Cambridge | Add a racing outline to Alex's updated campus scene                                                                                                                |
+| Alex Pearle        | Move Grayson's timer, lap count, and other race info onto the scooter for a diegetic experience                                                                    |
+| Grayson Smith      | Add a map that shows each player's position on campus. It may be non-diegetic at first; we'll decide as a team.                                                    |
+| Ty Levine          | Upload soundtracks to the shared OneDrive and add music to the game; Sprint 4 video                                                                                |
