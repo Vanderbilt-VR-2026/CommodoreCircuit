@@ -64,7 +64,7 @@ If the handlebar ends up in the wrong spot, click either thumbstick to move it b
 
 ## How to Test
 
-1. Download the Sprint 3 APK: [Sprint3.apk](https://vanderbilt365-my.sharepoint.com/:u:/g/personal/knathifa_l_cambridge_vanderbilt_edu/IQBZSyg7miYFRYarmNh_eKI-ASJ-pj8XCNXZq7jF-ukDbmk?e=dOfA9G) (Vanderbilt OneDrive)
+1. Download the Sprint 3 APK: [Sprint3.apk](https://vanderbilt365-my.sharepoint.com/:u:/g/personal/knathifa_l_cambridge_vanderbilt_edu/IQBRHyFSq0KRSpR0ESV4i9lJAVYfbUA9kErN1oVZf6L5hQU?e=BN8hTa) (Vanderbilt OneDrive)
 2. Install it on a Quest with SideQuest or Meta Quest Developer Hub, or run `adb install Sprint3.apk`
 3. Open **Commodore Circuit** from Unknown Sources in your Quest library
 4. In the classroom, point the right controller at the chalkboard and pull the trigger on **Create Lobby**
