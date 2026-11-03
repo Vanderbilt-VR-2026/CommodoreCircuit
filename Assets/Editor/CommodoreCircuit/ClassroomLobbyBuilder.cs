@@ -39,7 +39,6 @@ namespace CommodoreCircuit.EditorTools
         private const string LobbyPath = "Assets/Scenes/Lobby Scene.unity";
         private const string RootName = "Classroom";
         private const string MaterialFolder = "Assets/Materials/Lobby/Classroom";
-        private const string ChairModelPath = "Assets/Third Party/Kenney (models)/kenney_furniture-kit/Models/FBX format/chair.fbx";
 
         // Room interior. +Z is the front (chalkboard), matching LobbyBuilder and ChalkboardLobbySetup.
         private const float HalfWidth = 4f;
@@ -56,7 +55,6 @@ namespace CommodoreCircuit.EditorTools
         private const float TableHeight = 0.74f;
         private static readonly float[] TableColumnsX = { -3.0f, -1.9f, 1.9f, 3.0f };
         private static readonly float[] TableRowsZ = { 1.2f, -0.3f, -1.8f, -3.3f, -4.8f };
-        private const float ChairHeight = 0.85f;
 
         // Right wall windows: (centre along the Right Wall group's local x, width). Front one is the narrow one.
         private static readonly Vector2[] RightWindows = { new Vector2(-4.7f, 1.2f), new Vector2(-1.6f, 3.2f), new Vector2(2.5f, 3.2f) };
@@ -530,35 +528,17 @@ namespace CommodoreCircuit.EditorTools
             return table;
         }
 
+        // The grey stacking chair from ClassroomChairBuilder, already real size and coloured.
         private static void Chair(Transform parent, Vector3 floorCenter, float yaw)
         {
-            var model = AssetDatabase.LoadAssetAtPath<GameObject>(ChairModelPath);
-            if (model == null)
-            {
-                Debug.LogWarning($"ClassroomLobbyBuilder: {ChairModelPath} not found, skipping chairs.");
-                return;
-            }
-
+            GameObject model = ClassroomChairBuilder.LoadOrBuild();
             var chair = (GameObject)PrefabUtility.InstantiatePrefab(model, parent);
             chair.name = "Chair";
             chair.transform.rotation = Quaternion.Euler(0f, yaw, 0f);
-            chair.transform.localScale = Vector3.one;
 
-            // Kenney models pivot at a corner, so size and place the chair from its bounds.
+            // Centre it over the floor spot from its bounds.
             Bounds bounds = RendererBounds(chair);
-            if (bounds.size.y > 0f)
-                chair.transform.localScale = Vector3.one * (ChairHeight / bounds.size.y);
-            bounds = RendererBounds(chair);
             chair.transform.position += new Vector3(floorCenter.x - bounds.center.x, floorCenter.y - bounds.min.y, floorCenter.z - bounds.center.z);
-
-            // Grey like the real mesh chairs.
-            Material grey = Mat("ChairGrey", "BCC1C6", 0.3f);
-            foreach (Renderer r in chair.GetComponentsInChildren<Renderer>())
-            {
-                var mats = new Material[r.sharedMaterials.Length];
-                for (int i = 0; i < mats.Length; i++) mats[i] = grey;
-                r.sharedMaterials = mats;
-            }
         }
 
         // ---------------------------------------------------------------- wall fixtures
