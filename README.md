@@ -77,7 +77,7 @@ If the handlebar ends up in the wrong spot, click either thumbstick to move it b
 
 ## Sprint 3 (due October 29)
 
-_Sprint 3 video (coming soon)_ · [Sprint 3 APK](https://vanderbilt365-my.sharepoint.com/:f:/g/personal/knathifa_l_cambridge_vanderbilt_edu/IgA9IiQ7uj5YSL_Xj5EwE2QCAfGBX40-DTcwQjQOiXzZqeY?e=32jeNv)
+_Sprint 3 video (coming soon)_ · [Sprint 3 APK](https://vanderbilt365-my.sharepoint.com/:u:/g/personal/knathifa_l_cambridge_vanderbilt_edu/IQBRHyFSq0KRSpR0ESV4i9lJAVYfbUA9kErN1oVZf6L5hQU?e=WIBSlU)
 
 ### Sprint 3 Goals
 
