@@ -449,5 +449,18 @@ namespace CommodoreCircuit.EditorTools
             // Unity drops; baking the axis conversion into the mesh keeps them upright.
             if (assetPath.EndsWith("CarmichaelCollegeExterior.fbx")) mi.bakeAxisConversion = true;
         }
+
+        // Bump when the processing below changes, so Unity reimports the models on every machine.
+        public override uint GetVersion() => 1;
+
+        // Carmichael's base trim runs across the bottom of its drive-through arches; cut it out of the road.
+        private void OnPostprocessModel(GameObject root)
+        {
+            if (!assetPath.EndsWith("CarmichaelCollegeExterior.fbx")) return;
+            int cuts = 0;
+            foreach (MeshFilter mf in root.GetComponentsInChildren<MeshFilter>())
+                if (mf.sharedMesh != null) cuts += ArchTrimCutter.Cut(mf.sharedMesh);
+            Debug.Log($"Carmichael: cut the base trim out of {cuts} arch openings.");
+        }
     }
 }
