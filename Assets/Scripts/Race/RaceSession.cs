@@ -110,7 +110,13 @@ namespace CommodoreCircuit.Race
 
     public static class RaceFormat
     {
-        /// <summary>83.456 -> "01:23.45" (minutes:seconds.hundredths, like the HUD numerals sheet).</summary>
+        // The numerals font (Rajdhani) has proportional digits: a 1 is ~30 units wide, an 8 ~49.
+        // Centered text then slides sideways as the clock ticks, so every digit gets the same
+        // width (TextMeshPro <mspace>, a little over the widest digit). ':' and '.' keep their own.
+        private const string Digits = "<mspace=0.55em>";
+        private const string EndDigits = "</mspace>";
+
+        /// <summary>83.456 -> "01:23.45" (minutes:seconds.hundredths, like the HUD numerals sheet), with fixed-width digits.</summary>
         public static string Time(float seconds)
         {
             if (seconds < 0f || float.IsNaN(seconds)) seconds = 0f;
@@ -118,10 +124,10 @@ namespace CommodoreCircuit.Race
             int minutes = hundredths / 6000;
             int secs = hundredths / 100 % 60;
             int frac = hundredths % 100;
-            return $"{minutes:00}:{secs:00}.{frac:00}";
+            return $"{Digits}{minutes:00}{EndDigits}:{Digits}{secs:00}{EndDigits}.{Digits}{frac:00}{EndDigits}";
         }
 
-        public const string NoTime = "--:--.--";
+        public const string NoTime = Digits + "--" + EndDigits + ":" + Digits + "--" + EndDigits + "." + Digits + "--" + EndDigits;
 
         /// <summary>1 -> "1ST", 2 -> "2ND", 11 -> "11TH".</summary>
         public static string Ordinal(int n)

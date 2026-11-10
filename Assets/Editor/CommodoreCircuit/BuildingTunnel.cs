@@ -12,6 +12,8 @@ namespace CommodoreCircuit.EditorTools
     ///
     /// Always cuts from the building's ORIGINAL mesh asset, so re-running is safe.
     /// The original mesh asset is never changed; the result is saved as a new asset.
+    /// The path is the closed lap by default; pass closed = false for an open path
+    /// such as a shortcut, so its last point isn't joined back to its first.
     /// </summary>
     public static class BuildingTunnel
     {
@@ -20,7 +22,7 @@ namespace CommodoreCircuit.EditorTools
         private struct V { public Vector3 p; public Vector2 uv; }
         private struct Pl { public Vector3 n; public float d; public float Dist(Vector3 p) => Vector3.Dot(n, p) - d; }
 
-        public static bool Cut(string buildingName, Vector3[] center, Vector3[] left, float halfWidth, float height, string saveDir)
+        public static bool Cut(string buildingName, Vector3[] center, Vector3[] left, float halfWidth, float height, string saveDir, bool closed = true)
         {
             GameObject go = GameObject.Find(buildingName);
             if (go == null) { Debug.Log($"Tunnel: '{buildingName}' not in this scene, skipped."); return false; }
@@ -37,7 +39,8 @@ namespace CommodoreCircuit.EditorTools
             // Track corridor pieces (one convex quad per centerline segment) in the building's local space.
             List<Vector3[]> quads = new List<Vector3[]>();
             int n = center.Length;
-            for (int i = 0; i < n; i++)
+            int segments = closed ? n : n - 1;
+            for (int i = 0; i < segments; i++)
             {
                 int j = (i + 1) % n;
                 Vector3 dir = (center[j] - center[i]).normalized * 0.1f; // tiny overlap, no slivers
@@ -132,7 +135,8 @@ namespace CommodoreCircuit.EditorTools
             m.RecalculateNormals();
             m.RecalculateBounds();
 
-            string path = saveDir + "/Carmichael_Tunnel.asset";
+            // One file per building, so several buildings can be cut into the same folder.
+            string path = saveDir + "/" + (buildingName.Contains("Carmichael") ? "Carmichael" : buildingName.Replace(' ', '_')) + "_Tunnel.asset";
             AssetDatabase.DeleteAsset(path);
             AssetDatabase.CreateAsset(m, path);
 

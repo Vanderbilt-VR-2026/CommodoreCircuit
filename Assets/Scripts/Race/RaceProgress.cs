@@ -122,7 +122,7 @@ namespace CommodoreCircuit.Race
                 lastPhase = session.Phase;
             }
 
-            var here = track.Project(transform.position, segmentHint);
+            var here = track.ProjectWithShortcuts(transform.position, segmentHint);
             segmentHint = here.Segment;
             TrackDistance(here.Distance, session.Phase);
 
