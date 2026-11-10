@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using CommodoreCircuit.Audio;
 using CommodoreCircuit.Race;
 using CommodoreCircuit.Scooter;
 using TMPro;
@@ -10,23 +11,32 @@ using UnityEngine.UI;
 
 // Race pause menu. The left controller's menu button (☰) or Esc opens it in front of the rider.
 // Left stick or arrow keys move the highlight; A, the right trigger or Enter chooses.
-// Pausing freezes only your own scooter: in a multiplayer race everyone else keeps riding.
+// On the Music and Sound Effects rows, pushing left or right changes the volume (saved between launches).
+// In a multiplayer race the pause is shared (NetworkRaceSession): pausing during the countdown or
+// the race freezes everyone and stops the clock, so nobody gains time. Only the player who paused,
+// or the host, can resume. Before the countdown and on the results screen it opens just for you.
 // It adds itself to any scene with a scooter, so the campus track needs no setup.
 public class RacePauseMenu : MonoBehaviour
 {
     private const float MenuDistance = 1.2f;
     // Bright Gold from Design/DESIGN_LANGUAGE_1.md.
     private static readonly Color HighlightColor = new Color32(0xFF, 0xC7, 0x2C, 0xFF);
-    private const int MaxOptions = 3;
+    private const int MaxOptions = 5;
+    private const float VolumeStep = 0.1f;
 
     private ScooterController scooter;
-    private InputAction toggleAction, stickAction, upAction, downAction, selectAction;
+    private InputAction toggleAction, stickAction, upAction, downAction, leftAction, rightAction, selectAction;
     private GameObject panel;
     private readonly List<TMP_Text> optionTexts = new List<TMP_Text>();
-    private readonly List<(string label, Action choose)> options = new List<(string, Action)>();
+    // A row either does something when chosen, or (volume rows) changes with left/right: adjust gets -1 or +1.
+    private readonly List<(Func<string> label, Action choose, Action<int> adjust)> options = new List<(Func<string>, Action, Action<int>)>();
     private TMP_Text hintText;
     private int selected;
-    private bool stickHeld;
+    private bool stickHeldY, stickHeldX;
+    // The menu is showing because the whole race is paused (it closes when the race resumes).
+    private bool sharedMenu;
+    // Solo only: our own race clock was stopped when the menu opened.
+    private bool pausedClock;
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
     private static void Register() => SceneManager.sceneLoaded += (scene, mode) =>
@@ -49,6 +59,8 @@ public class RacePauseMenu : MonoBehaviour
         stickAction = new InputAction("MenuStick", InputActionType.Value, "<XRController>{LeftHand}/{Primary2DAxis}");
         upAction = new InputAction("MenuUp", InputActionType.Button, "<Keyboard>/upArrow");
         downAction = new InputAction("MenuDown", InputActionType.Button, "<Keyboard>/downArrow");
+        leftAction = new InputAction("MenuLeft", InputActionType.Button, "<Keyboard>/leftArrow");
+        rightAction = new InputAction("MenuRight", InputActionType.Button, "<Keyboard>/rightArrow");
 
         selectAction = new InputAction("MenuSelect", InputActionType.Button);
         selectAction.AddBinding("<XRController>{RightHand}/{PrimaryButton}"); // A
@@ -65,6 +77,8 @@ public class RacePauseMenu : MonoBehaviour
         stickAction.Enable();
         upAction.Enable();
         downAction.Enable();
+        leftAction.Enable();
+        rightAction.Enable();
         selectAction.Enable();
     }
 
@@ -74,31 +88,39 @@ public class RacePauseMenu : MonoBehaviour
         stickAction.Disable();
         upAction.Disable();
         downAction.Disable();
+        leftAction.Disable();
+        rightAction.Disable();
         selectAction.Disable();
     }
 
     private void Update()
     {
+        // Everyone's menu follows the shared pause, whoever pressed it.
+        var net = NetworkRaceSession.Instance;
+        bool racePaused = net && net.IsPaused;
+        if (racePaused && !sharedMenu) Open(shared: true);
+        else if (!racePaused && sharedMenu) Close();
+
         if (toggleAction.WasPressedThisFrame())
         {
-            if (panel.activeSelf) Close();
-            else Open();
+            if (sharedMenu)
+            {
+                if (net.CanResume) net.RequestPause(false);
+            }
+            else if (!panel.activeSelf && net && net.CanPause)
+            {
+                // The menu opens for everyone once the master pauses the race.
+                net.RequestPause(true);
+            }
+            else if (panel.activeSelf) Close();
+            else Open(shared: false);
             return;
         }
         if (!panel.activeSelf) return;
+        if (sharedMenu) ShowPauseStatus(net);
 
-        // One step per stick push: it has to come back toward centre before it moves again.
-        int step = 0;
-        float y = stickAction.ReadValue<Vector2>().y;
-        if (Mathf.Abs(y) > 0.6f)
-        {
-            if (!stickHeld) step = y > 0f ? -1 : 1;
-            stickHeld = true;
-        }
-        else if (Mathf.Abs(y) < 0.3f)
-        {
-            stickHeld = false;
-        }
+        Vector2 stick = stickAction.ReadValue<Vector2>();
+        int step = StickStep(-stick.y, ref stickHeldY);
         if (upAction.WasPressedThisFrame()) step = -1;
         if (downAction.WasPressedThisFrame()) step = 1;
         if (step != 0)
@@ -107,17 +129,44 @@ public class RacePauseMenu : MonoBehaviour
             Refresh();
         }
 
-        if (selectAction.WasPressedThisFrame())
+        int side = StickStep(stick.x, ref stickHeldX);
+        if (leftAction.WasPressedThisFrame()) side = -1;
+        if (rightAction.WasPressedThisFrame()) side = 1;
+        if (side != 0 && options[selected].adjust != null)
+        {
+            options[selected].adjust(side);
+            Refresh();
+        }
+
+        if (selectAction.WasPressedThisFrame() && options[selected].choose != null)
         {
             Action choose = options[selected].choose;
-            Close();
+            // A shared pause closes by itself once the race resumes for everyone.
+            if (!sharedMenu) Close();
             choose();
         }
     }
 
-    // Freeze our scooter and show the menu level in front of where the rider is looking.
-    private void Open()
+    // One step per stick push: it has to come back toward centre before it moves again.
+    private static int StickStep(float value, ref bool held)
     {
+        int step = 0;
+        if (Mathf.Abs(value) > 0.6f)
+        {
+            if (!held) step = value > 0f ? 1 : -1;
+            held = true;
+        }
+        else if (Mathf.Abs(value) < 0.3f)
+        {
+            held = false;
+        }
+        return step;
+    }
+
+    // Freeze our scooter and show the menu level in front of where the rider is looking.
+    private void Open(bool shared)
+    {
+        sharedMenu = shared;
         BuildOptions();
         selected = 0;
         Refresh();
@@ -132,22 +181,42 @@ public class RacePauseMenu : MonoBehaviour
 
         // The scooter moves itself in FixedUpdate, so disabling it holds it exactly where it is.
         if (scooter) scooter.enabled = false;
-        // Stop our race clock too; other racers' clocks keep running.
-        if (RaceProgress.Local) RaceProgress.Local.SetPaused(true);
+        // Solo, stop our own clock. Online the shared pause stops the race clock for everyone
+        // instead, and a menu opened just for you (before GO, or on results) stops nothing.
+        if (!pausedClock && !RaceSession.HasNetworkSession && RaceProgress.Local)
+        {
+            RaceProgress.Local.SetPaused(true);
+            pausedClock = true;
+        }
     }
 
     private void Close()
     {
         panel.SetActive(false);
+        sharedMenu = false;
         if (scooter) scooter.enabled = true;
-        if (RaceProgress.Local) RaceProgress.Local.SetPaused(false);
+        if (pausedClock && RaceProgress.Local) RaceProgress.Local.SetPaused(false);
+        pausedClock = false;
+    }
+
+    // "Player 2 paused the race. Resumes by itself in 42s."
+    private void ShowPauseStatus(NetworkRaceSession net)
+    {
+        bool mine = net.PausedByPlayer == net.Runner.LocalPlayer;
+        string status = mine ? "You paused the race for everyone." : $"Player {net.PausedByPlayer.PlayerId} paused the race.";
+        float left = net.PauseTimeRemaining;
+        if (left >= 0f) status += $" Resumes by itself in {Mathf.CeilToInt(left)}s.";
+        if (!net.CanResume) status += "\nOnly they or the host can resume.";
+        hintText.text = status;
     }
 
     // Restart and Back to Lobby move the whole room, so only the host gets them online.
     private void BuildOptions()
     {
         options.Clear();
-        options.Add(("Resume", () => { }));
+        var net = NetworkRaceSession.Instance;
+        if (!sharedMenu) AddChoice("Resume", () => { });
+        else if (net.CanResume) AddChoice("Resume", () => net.RequestPause(false));
 
         var controller = FusionPlayerSpawnerAndLobbyController.Instance;
         var manager = FusionNetworkManager.Instance;
@@ -155,36 +224,50 @@ public class RacePauseMenu : MonoBehaviour
         if (!online)
         {
             // Playing the track on its own in the Editor, without a lobby.
-            options.Add(("Restart Race", () => SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex)));
-            options.Add(("Back to Lobby", () => SceneManager.LoadScene(0)));
-            hintText.text = "Left stick: move    A / trigger: select    Menu: resume";
+            AddChoice("Restart Race", () => SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex));
+            AddChoice("Back to Lobby", () => SceneManager.LoadScene(0));
+            hintText.text = "Left stick: move, left/right for volume    A / trigger: select    Menu: resume";
         }
         else if (controller.IsHost)
         {
-            options.Add(("Restart Race", controller.RestartRace));
-            options.Add(("Back to Lobby", controller.ReturnToLobby));
+            AddChoice("Restart Race", controller.RestartRace);
+            AddChoice("Back to Lobby", controller.ReturnToLobby);
             hintText.text = "You're the host: Restart and Back to Lobby apply to everyone.";
         }
         else
         {
-            options.Add(("Leave Race", () => manager.ReturnToMenu("You left the race.")));
+            AddChoice("Leave Race", () => manager.ReturnToMenu("You left the race."));
             hintText.text = "Only the host can restart the race or return everyone to the lobby.";
         }
 
+        AddVolume("Music", GameAudio.Channel.Music);
+        AddVolume("Sound Effects", GameAudio.Channel.Sfx);
+
         for (int i = 0; i < optionTexts.Count; i++)
             optionTexts[i].gameObject.SetActive(i < options.Count);
+    }
+
+    private void AddChoice(string label, Action choose) => options.Add((() => label, choose, null));
+
+    // Shows as "Music   < 80% >" and moves in 10% steps.
+    private void AddVolume(string label, GameAudio.Channel channel)
+    {
+        options.Add((
+            () => $"{label}   < {Mathf.RoundToInt(GameAudio.GetVolume(channel) * 100f)}% >",
+            null,
+            side => GameAudio.SetVolume(channel, Mathf.Round((GameAudio.GetVolume(channel) + side * VolumeStep) * 10f) / 10f)));
     }
 
     private void Refresh()
     {
         for (int i = 0; i < options.Count; i++)
         {
-            optionTexts[i].text = (i == selected ? "> " : "") + options[i].label;
+            optionTexts[i].text = (i == selected ? "> " : "") + options[i].label();
             optionTexts[i].color = i == selected ? HighlightColor : Color.white;
         }
     }
 
-    // 500 x 320 canvas units at 2 mm each: a 1 m x 0.64 m dark panel.
+    // 500 x 420 canvas units at 2 mm each: a 1 m x 0.84 m dark panel.
     private void BuildPanel()
     {
         panel = new GameObject("Pause Canvas", typeof(RectTransform));
@@ -192,14 +275,14 @@ public class RacePauseMenu : MonoBehaviour
         var canvas = panel.AddComponent<Canvas>();
         canvas.renderMode = RenderMode.WorldSpace;
         var rect = (RectTransform)panel.transform;
-        rect.sizeDelta = new Vector2(500f, 320f);
+        rect.sizeDelta = new Vector2(500f, 420f);
         rect.localScale = Vector3.one * 0.002f;
         panel.AddComponent<Image>().color = new Color(0.08f, 0.08f, 0.08f, 0.9f);
 
-        CreateText("Title", "PAUSED", 110f, 44f);
+        CreateText("Title", "PAUSED", 160f, 44f);
         for (int i = 0; i < MaxOptions; i++)
-            optionTexts.Add(CreateText("Option " + (i + 1), "", 40f - i * 50f, 30f));
-        hintText = CreateText("Hint", "", -125f, 15f);
+            optionTexts.Add(CreateText("Option " + (i + 1), "", 90f - i * 50f, 30f));
+        hintText = CreateText("Hint", "", -175f, 15f);
     }
 
     private TMP_Text CreateText(string name, string content, float y, float fontSize)

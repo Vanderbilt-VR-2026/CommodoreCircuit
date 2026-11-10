@@ -1,3 +1,4 @@
+using CommodoreCircuit.Audio;
 using UnityEngine;
 
 namespace CommodoreCircuit.Race.UI
@@ -29,6 +30,7 @@ namespace CommodoreCircuit.Race.UI
 
         private void Awake()
         {
+            GameAudio.Route(audioSource, GameAudio.Channel.UI);
             if (alarmClip == null) alarmClip = RaceTones.Get(0.14f, 880f, 587f);
             RaceUi.Show(group, this, false);
         }

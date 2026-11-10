@@ -101,6 +101,10 @@ namespace CommodoreCircuit.Scooter
         [SerializeField] private float driftSlideAngle = 35f;
         [Tooltip("How quickly the slide angle settles in and back out.")]
         [SerializeField] private float driftSlideCatchup = 90f;
+        [Tooltip("A drift is locked to the side it started on, like Mario Kart. Steering a little the other way widens the line: this is how hard it would still turn into the drift with the bars full the other way (0-1). Steering into the drift turns at full.")]
+        [SerializeField, Range(0f, 1f)] private float driftCounterSteerTurn = 0.3f;
+        [Tooltip("Steering this far the other way (0-1 of full lock) breaks the drift and throws away its charge. Let go of drift and press it again to start a new one.")]
+        [SerializeField, Range(0.05f, 1f)] private float driftBreakSteer = 0.3f;
 
         [Header("Drift Boost")]
         [Tooltip("Steer amount (0-1) that counts as steering hard into the drift. Hard steering fills the boost meter faster.")]
@@ -186,6 +190,10 @@ namespace CommodoreCircuit.Scooter
         private float headingYaw;
         private Transform frontSteerPivot;
         private bool wasAgainstWall;
+        // Side the current drift is locked to: 1 right, -1 left, 0 not drifting.
+        private int driftDirection;
+        // Set when the drift was broken by steering the other way; cleared when the button is let go.
+        private bool driftBroken;
         private Vector3 lastSafePosition;
         private float lastSafeYaw;
         private bool hasSafePosition;
@@ -218,6 +226,13 @@ namespace CommodoreCircuit.Scooter
         public BoostTier ActiveBoostTier { get; private set; } = BoostTier.None;
         /// <summary>Raised the moment a drift is released with enough charge for a boost.</summary>
         public event System.Action<BoostTier> BoostStarted;
+        /// <summary>
+        /// Raised the moment the scooter bumps into a wall, with how fast it was
+        /// going into the wall in m/s. Scraping along a wall doesn't count.
+        /// </summary>
+        public event System.Action<float> WallHit;
+        /// <summary>Raised when a drift is broken by steering the other way, losing its charge.</summary>
+        public event System.Action DriftBroken;
         /// <summary>
         /// While true, throttle, brake and drift are ignored and the scooter coasts.
         /// Steering and recentering still work. The race sets this during the
@@ -455,6 +470,8 @@ namespace CommodoreCircuit.Scooter
             driftCharge = 0f;
             boostTimer = 0f;
             IsDrifting = false;
+            driftDirection = 0;
+            driftBroken = false;
             ChargeTier = BoostTier.None;
             wasAgainstWall = false;
             wallPenaltyTimer = 0f;
@@ -487,15 +504,44 @@ namespace CommodoreCircuit.Scooter
 
             bool driftHeld = driftInput > driftTriggerThreshold
                 && Mathf.Abs(signedSpeed) > minDriftSpeed;
-            IsDrifting = driftHeld && Mathf.Abs(smoothedSteer) > 0.08f;
-            UpdateDriftCharge(driftHeld);
+            // The drift starts on whichever side you're steering when you hold the
+            // button, and stays on that side until you let go. Steering clearly the
+            // other way breaks it: the charge is lost, and a new drift needs a fresh
+            // press, so you can't just flick the drift over to the other side.
+            if (!driftHeld)
+            {
+                driftDirection = 0;
+                driftBroken = false;
+            }
+            else if (driftDirection != 0 && smoothedSteer * driftDirection < -driftBreakSteer)
+            {
+                driftDirection = 0;
+                driftBroken = true;
+                driftCharge = 0f;
+                ChargeTier = BoostTier.None;
+                DriftBroken?.Invoke();
+            }
+            else if (driftDirection == 0 && !driftBroken && Mathf.Abs(smoothedSteer) > 0.08f)
+            {
+                driftDirection = smoothedSteer > 0f ? 1 : -1;
+            }
+            IsDrifting = driftDirection != 0;
 
-            float targetSlip = IsDrifting ? Mathf.Sign(smoothedSteer) * driftSlideAngle : 0f;
+            // While drifting, the bars only change how tight the drift is, never its
+            // side: full into the drift turns at full, a little the other way widens
+            // the line (any further breaks it, above). Without this, holding drift was just a free turn.
+            float driftInto = smoothedSteer * driftDirection;
+            float turnSteer = IsDrifting
+                ? driftDirection * Mathf.Lerp(driftCounterSteerTurn, 1f, (driftInto + 1f) * 0.5f)
+                : smoothedSteer;
+            UpdateDriftCharge(driftHeld, driftInto);
+
+            float targetSlip = IsDrifting ? driftDirection * driftSlideAngle : 0f;
             currentSlip = Mathf.MoveTowards(currentSlip, targetSlip, driftSlideCatchup * Time.fixedDeltaTime);
 
             float rate = IsDrifting ? driftTurnRate : turnRate;
             float speedFactor = Mathf.Clamp01(Mathf.Abs(signedSpeed) / 4f);
-            headingYaw += smoothedSteer * rate * speedFactor * Time.fixedDeltaTime;
+            headingYaw += turnSteer * rate * speedFactor * Time.fixedDeltaTime;
 
             Vector3 nose = Quaternion.Euler(0f, headingYaw, 0f) * Vector3.forward;
 
@@ -559,10 +605,10 @@ namespace CommodoreCircuit.Scooter
             Vector3 travel = Quaternion.AngleAxis(-currentSlip, Vector3.up) * nose;
 
             float leanTarget = 0f;
-            if (Mathf.Abs(smoothedSteer) > 0.01f && Mathf.Abs(signedSpeed) > 0.5f)
+            if (Mathf.Abs(turnSteer) > 0.01f && Mathf.Abs(signedSpeed) > 0.5f)
             {
                 float leanAmount = IsDrifting ? driftLeanAngle : turnLeanAngle;
-                leanTarget = -smoothedSteer * leanAmount * Mathf.Clamp01(Mathf.Abs(signedSpeed) / 6f);
+                leanTarget = -turnSteer * leanAmount * Mathf.Clamp01(Mathf.Abs(signedSpeed) / 6f);
             }
 
             currentLean = Mathf.SmoothDamp(currentLean, leanTarget, ref leanVelocity, leanSmoothTime);
@@ -610,14 +656,13 @@ namespace CommodoreCircuit.Scooter
             rb.MoveRotation(Quaternion.LookRotation(facing, Vector3.up) * Quaternion.Euler(0f, 0f, currentLean));
         }
 
-        // Fills the boost meter while drifting. Steering hard into the turn
-        // fills it faster. If the drift button is still held but steering
-        // passes through center, the charge simply waits instead of firing.
-        private void UpdateDriftCharge(bool driftHeld)
+        // Fills the boost meter while drifting. Steering hard into the drift
+        // (driftInto: 1 = full into it, -1 = full the other way) fills it faster.
+        private void UpdateDriftCharge(bool driftHeld, float driftInto)
         {
             if (IsDrifting)
             {
-                bool steeringHard = Mathf.Abs(smoothedSteer) >= chargeOptimalSteer;
+                bool steeringHard = driftInto >= chargeOptimalSteer;
                 driftCharge += (steeringHard ? chargeRateOptimal : chargeRateShallow) * Time.fixedDeltaTime;
                 ChargeTier = TierForCharge(driftCharge);
             }
@@ -721,6 +766,7 @@ namespace CommodoreCircuit.Scooter
 
             if (hitWall && !wasAgainstWall && headOn >= wallPenaltyMinHeadOn)
             {
+                WallHit?.Invoke(Mathf.Abs(currentSpeed) * headOn);
                 // Straight-on hits lose the full amount; glancing hits lose less.
                 currentSpeed *= Mathf.Lerp(1f, wallSpeedRetention, headOn);
                 if (headOn > 0.5f) boostTimer = 0f;

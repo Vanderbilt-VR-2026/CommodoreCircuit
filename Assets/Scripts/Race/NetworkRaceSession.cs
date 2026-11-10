@@ -18,6 +18,11 @@ namespace CommodoreCircuit.Race
     ///   Countdown -> "Get ready", then 3-2-1
     ///   Racing    -> until everyone finishes, or Finish Grace after the first finisher
     ///   Results   -> standings, then back to the lobby after Results Seconds
+    ///
+    /// Pausing is shared: when anyone pauses during the countdown or the race, the
+    /// clock stops for everyone and every rider is frozen (RacePauseMenu). Only the
+    /// player who paused, or the host, can resume. On resume the deadlines move back by
+    /// however long the pause lasted, so nobody's time includes it.
     /// </summary>
     [RequireComponent(typeof(NetworkObject))]
     public class NetworkRaceSession : NetworkBehaviour, IRaceSession
@@ -34,6 +39,8 @@ namespace CommodoreCircuit.Race
         [SerializeField, Min(5f)] private float finishGraceSeconds = 45f;
         [SerializeField, Min(3f)] private float resultsSeconds = 20f;
         [SerializeField] private bool returnToLobby = true;
+        [Tooltip("A pause resumes by itself after this many seconds, so one player can't hold up the race. 0 = never.")]
+        [SerializeField, Min(0f)] private float maxPauseSeconds = 60f;
 
         [Networked] private RacePhase NetPhase { get; set; }
         [Networked] private float WaitStart { get; set; }
@@ -41,17 +48,65 @@ namespace CommodoreCircuit.Race
         [Networked] private float FirstFinishTime { get; set; }
         [Networked] private float ResultsStart { get; set; }
         [Networked] private int NetLaps { get; set; }
+        [Networked] private PlayerRef PausedBy { get; set; }
+        [Networked] private float PauseStart { get; set; }
 
         private bool loadingLobby;
         private bool Live => Object && Object.IsValid;
         private float Now => Runner ? Runner.SimulationTime : 0f;
+        // The race clock: stands still while the race is paused.
+        private float Clock => IsPaused ? PauseStart : Now;
+
+        // ---- Shared pause ----
+        public bool IsPaused => Live && PausedBy != PlayerRef.None;
+        /// <summary>Who paused the race (PlayerRef.None when it isn't paused).</summary>
+        public PlayerRef PausedByPlayer => Live ? PausedBy : PlayerRef.None;
+        /// <summary>The race can be paused during the countdown and the race itself.</summary>
+        public bool CanPause => Live && !IsPaused && (NetPhase == RacePhase.Countdown || NetPhase == RacePhase.Racing);
+        /// <summary>True for the player who paused, and for the host.</summary>
+        public bool CanResume => IsPaused && (PausedBy == Runner.LocalPlayer || HasStateAuthority);
+        /// <summary>Seconds until the pause ends by itself, or -1 if it won't.</summary>
+        public float PauseTimeRemaining => IsPaused && maxPauseSeconds > 0f
+            ? Mathf.Max(0f, PauseStart + maxPauseSeconds - Now) : -1f;
+
+        /// <summary>Ask the master to pause or resume the race for everyone.</summary>
+        public void RequestPause(bool pause)
+        {
+            if (Live) RpcRequestPause(Runner.LocalPlayer, pause);
+        }
+
+        [Rpc(RpcSources.All, RpcTargets.StateAuthority)]
+        private void RpcRequestPause(PlayerRef requester, NetworkBool pause)
+        {
+            if (pause)
+            {
+                if (PausedBy != PlayerRef.None) return;
+                if (NetPhase != RacePhase.Countdown && NetPhase != RacePhase.Racing) return;
+                PausedBy = requester;
+                PauseStart = Now;
+            }
+            else if (PausedBy != PlayerRef.None && (requester == PausedBy || requester == Runner.LocalPlayer))
+            {
+                Resume();
+            }
+        }
+
+        // Push every deadline back by the length of the pause, so the countdown and
+        // the race clock carry on exactly where they stopped.
+        private void Resume()
+        {
+            float paused = Now - PauseStart;
+            GoTime += paused;
+            if (FirstFinishTime > 0f) FirstFinishTime += paused;
+            PausedBy = PlayerRef.None;
+        }
 
         // ---- IRaceSession ----
         public RacePhase Phase => Live ? NetPhase : RacePhase.Waiting;
         public int Laps => Live && NetLaps > 0 ? NetLaps : laps;
         public float CountdownSeconds => countdownSeconds;
-        public float TimeUntilGo => Phase == RacePhase.Countdown ? GoTime - Now : 0f;
-        public float RaceTime => Phase >= RacePhase.Racing ? Mathf.Max(0f, Now - GoTime) : 0f;
+        public float TimeUntilGo => Phase == RacePhase.Countdown ? GoTime - Clock : 0f;
+        public float RaceTime => Phase >= RacePhase.Racing ? Mathf.Max(0f, Clock - GoTime) : 0f;
         public bool IsNetworked => true;
         public float ResultsTimeRemaining => Phase == RacePhase.Results && returnToLobby
             ? Mathf.Max(0f, ResultsStart + resultsSeconds - Now) : -1f;
@@ -85,6 +140,16 @@ namespace CommodoreCircuit.Race
             // object to the new master and it carries on from the stored deadlines.
             if (!HasStateAuthority) return;
             float now = Now;
+
+            // Nothing moves on while paused. Resume by itself if the player who paused
+            // left, or the pause has gone on too long.
+            if (PausedBy != PlayerRef.None)
+            {
+                bool pauserLeft = !Runner.ActivePlayers.Contains(PausedBy);
+                bool tooLong = maxPauseSeconds > 0f && now - PauseStart >= maxPauseSeconds;
+                if (pauserLeft || tooLong) Resume();
+                else return;
+            }
 
             switch (NetPhase)
             {
