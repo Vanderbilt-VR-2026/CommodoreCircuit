@@ -1,6 +1,7 @@
 using System.Collections;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using CommodoreCircuit.Interactables;
 
 namespace CommodoreCircuit.Scooter
 {
@@ -154,6 +155,17 @@ namespace CommodoreCircuit.Scooter
         [Header("Ground")]
         [SerializeField] private float rideHeight = 0f;
 
+        [Header("Track Interactables")]
+        [Tooltip("How fast a hazard slowdown pulls the scooter down to its reduced top speed (m/s per second).")]
+        [SerializeField] private float hazardSlowDeceleration = 25f;
+        [Tooltip("How fast a hazard's knockback push dies away (m/s per second). Keep it quick and small for comfort.")]
+        [SerializeField] private float knockbackDecay = 12f;
+        [Tooltip("Largest sideways knockback speed allowed (m/s).")]
+        [SerializeField] private float maxKnockbackSpeed = 3f;
+
+        private RacerEffects racerEffects;
+        private Vector3 knockbackVelocity;
+
         private Rigidbody rb;
         private BoxCollider bodyCollider;
         private InputAction accelerateAction;
@@ -257,6 +269,11 @@ namespace CommodoreCircuit.Scooter
             if (rearWheel != null) rearWheel.enabled = false;
             SetupWheelVisuals();
 
+            // Hazards and power-ups find the racer through RacerEffects on the
+            // scooter root. Add it here so no scene has to be edited by hand.
+            racerEffects = GetComponent<RacerEffects>();
+            if (racerEffects == null) racerEffects = gameObject.AddComponent<RacerEffects>();
+
             // Lift the body box off the asphalt so track seams cannot kick the scooter.
             bodyCollider = GetComponent<BoxCollider>();
             if (bodyCollider != null)
@@ -307,6 +324,7 @@ namespace CommodoreCircuit.Scooter
             riderHeightAction.Enable();
             recenterAction.performed += OnRecenterPerformed;
             recenterAction.Enable();
+            if (racerEffects != null) racerEffects.onHit.AddListener(OnHazardHit);
         }
 
         private void OnDisable()
@@ -321,6 +339,17 @@ namespace CommodoreCircuit.Scooter
             SaveRiderHeight();
             recenterAction.performed -= OnRecenterPerformed;
             recenterAction.Disable();
+            if (racerEffects != null) racerEffects.onHit.RemoveListener(OnHazardHit);
+        }
+
+        // A hazard landed: drop any drift boost and take its push. The slowdown
+        // itself comes from RacerEffects.SpeedMultiplier in FixedUpdate.
+        private void OnHazardHit(HazardHit hit)
+        {
+            boostTimer = 0f;
+            Vector3 push = hit.knockback;
+            push.y = 0f;
+            knockbackVelocity = Vector3.ClampMagnitude(push, maxKnockbackSpeed);
         }
 
         private void Start()
@@ -469,6 +498,7 @@ namespace CommodoreCircuit.Scooter
             leanVelocity = 0f;
             driftCharge = 0f;
             boostTimer = 0f;
+            knockbackVelocity = Vector3.zero;
             IsDrifting = false;
             driftDirection = 0;
             driftBroken = false;
@@ -598,6 +628,23 @@ namespace CommodoreCircuit.Scooter
                     speedChange *= currentSurface.AccelerationMultiplier;
             }
 
+            // Track interactables: a hazard hit lowers the top speed for a moment,
+            // a speed cookie raises it like a drift boost.
+            float effectMultiplier = racerEffects != null ? racerEffects.SpeedMultiplier : 1f;
+            if (effectMultiplier < 0.999f)
+            {
+                float cap = maxSpeed * effectMultiplier;
+                if (targetSpeed > cap)
+                    targetSpeed = cap;
+                if (signedSpeed > cap)
+                    speedChange = Mathf.Max(speedChange, hazardSlowDeceleration);
+            }
+            else if (effectMultiplier > 1.001f && !isBraking && signedSpeed >= 0f)
+            {
+                targetSpeed = Mathf.Max(targetSpeed, maxSpeed * effectMultiplier);
+                speedChange = Mathf.Max(speedChange, boostAcceleration);
+            }
+
             currentSpeed = Mathf.MoveTowards(signedSpeed, targetSpeed, speedChange * Time.fixedDeltaTime);
 
             // Positive slip yaws the nose to the left of travel. Negating it
@@ -616,6 +663,12 @@ namespace CommodoreCircuit.Scooter
             Vector3 delta = travel.sqrMagnitude > 0.0001f
                 ? travel.normalized * currentSpeed * Time.fixedDeltaTime
                 : Vector3.zero;
+            if (knockbackVelocity.sqrMagnitude > 0.0001f)
+            {
+                // Goes through the wall sweep below, so a push can't shove the scooter through a barrier.
+                delta += knockbackVelocity * Time.fixedDeltaTime;
+                knockbackVelocity = Vector3.MoveTowards(knockbackVelocity, Vector3.zero, knockbackDecay * Time.fixedDeltaTime);
+            }
             delta.y = 0f;
             // Walls are checked with the body box at its NEW heading. Turning or
             // drifting swings the 1.4 m body sideways, and a sweep cannot see a

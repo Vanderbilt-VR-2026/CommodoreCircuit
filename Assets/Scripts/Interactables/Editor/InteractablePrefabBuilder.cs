@@ -8,7 +8,7 @@ using Object = UnityEngine.Object;
 namespace CommodoreCircuit.Interactables.EditorTools
 {
     /// <summary>
-    /// Tools > Commodore Circuit > Build Interactable Prefabs
+    /// CommodoreCircuit > Interactables > Build Interactable Prefabs
     ///
     /// Turns the six FBX models into ready-to-place prefabs: shared toon material,
     /// colliders, Rigidbody, gameplay scripts, default paths and tuning values.
@@ -17,7 +17,7 @@ namespace CommodoreCircuit.Interactables.EditorTools
     /// </summary>
     public static class InteractablePrefabBuilder
     {
-        const string Menu = "Tools/Commodore Circuit/";
+        const string Menu = "CommodoreCircuit/Interactables/";
 
         [MenuItem(Menu + "Build Interactable Prefabs (keep existing)")]
         static void BuildMissing() => Build(false);
