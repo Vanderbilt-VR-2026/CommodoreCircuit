@@ -45,6 +45,9 @@ namespace CommodoreCircuit.Interactables.EditorTools
             made += Make("SpeedCookie", overwrite, mat, (root, model) => Cookie(root, model));
             made += Make("MealSwipe", overwrite, mat, (root, model) => MealSwipe(root, model));
 
+            // Freshly built prefabs have no sounds; put them back.
+            InteractableSoundSetup.Apply();
+
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();
             Debug.Log($"[Commodore Circuit] Built {made} interactable prefab(s) in {InteractablePaths.Prefabs}.");
