@@ -22,6 +22,8 @@ namespace CommodoreCircuit.Interactables
         public Rigidbody body;
 
         [Header("Haptics")]
+        [Tooltip("Off for bots, so their hits and pickups don't buzz the player's controllers.")]
+        public bool haptics = true;
         [Range(0f, 1f)] public float hitHapticAmplitude = 0.8f;
         public float hitHapticDuration = 0.25f;
         [Range(0f, 1f)] public float pickupHapticAmplitude = 0.35f;
@@ -74,7 +76,7 @@ namespace CommodoreCircuit.Interactables
             if (IsShielded)
             {
                 shieldUntil = 0f;               // one-hit shield
-                Pulse(pickupHapticAmplitude, pickupHapticDuration);
+                if (haptics) Pulse(pickupHapticAmplitude, pickupHapticDuration);
                 onShieldBlocked.Invoke();
                 return false;
             }
@@ -85,7 +87,7 @@ namespace CommodoreCircuit.Interactables
             if (body != null && hit.knockback != Vector3.zero && !body.isKinematic)
                 body.AddForce(hit.knockback, ForceMode.VelocityChange);
 
-            Pulse(hitHapticAmplitude, hitHapticDuration);
+            if (haptics) Pulse(hitHapticAmplitude, hitHapticDuration);
             onHit.Invoke(hit);
             return true;
         }
@@ -95,14 +97,14 @@ namespace CommodoreCircuit.Interactables
             slowUntil = 0f;                     // a boost clears an active slowdown
             boostMultiplier = Mathf.Max(1f, speedMultiplier);
             boostUntil = Time.time + duration;
-            Pulse(pickupHapticAmplitude, pickupHapticDuration);
+            if (haptics) Pulse(pickupHapticAmplitude, pickupHapticDuration);
             onBoost.Invoke(duration);
         }
 
         public void GrantShield(float duration)
         {
             shieldUntil = Time.time + duration;
-            Pulse(pickupHapticAmplitude, pickupHapticDuration);
+            if (haptics) Pulse(pickupHapticAmplitude, pickupHapticDuration);
             onShieldStart.Invoke();
         }
 

@@ -17567,6 +17567,10 @@ MonoBehaviour:
   gripReleaseThreshold: 0.3
   setUpRiderOnStart: 1
   riderEyeHeight: 1.7
+  allowRiderHeightAdjust: 1
+  riderHeightAdjustSpeed: 0.3
+  riderHeightMin: 0.8
+  riderHeightMax: 2.2
   maxSpeed: 14
   acceleration: 18
   brakeDeceleration: 28
@@ -17585,6 +17589,8 @@ MonoBehaviour:
   driftTurnRate: 48
   driftSlideAngle: 35
   driftSlideCatchup: 90
+  driftCounterSteerTurn: 0.3
+  driftBreakSteer: 0.3
   chargeOptimalSteer: 0.7
   chargeRateOptimal: 1
   chargeRateShallow: 0.4
@@ -17603,7 +17609,15 @@ MonoBehaviour:
   wallBumpDistance: 0.12
   wallAccelerationMultiplier: 0.2
   wallAccelerationPenaltyDuration: 1.2
+  solidSteepSurfaces: 1
+  wallSkin: 0.04
+  wallPenaltyMinHeadOn: 0.3
+  fallResetHeight: -15
+  noGroundResetTime: 1.5
   rideHeight: 0
+  hazardSlowDeceleration: 25
+  knockbackDecay: 12
+  maxHazardPushSpeed: 5
 --- !u!65 &2107480164
 BoxCollider:
   m_ObjectHideFlags: 0

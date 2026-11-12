@@ -35,6 +35,9 @@ namespace CommodoreCircuit.Interactables
         Collider[] colliders;
         bool available = true;
 
+        /// <summary>False while collected and waiting to respawn. Bots only go for available ones.</summary>
+        public bool Available => available;
+
         void Awake()
         {
             colliders = GetComponentsInChildren<Collider>();

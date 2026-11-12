@@ -14,7 +14,8 @@ namespace CommodoreCircuit.Race
     /// phase and stores shared deadlines; every client draws its own UI from them.
     /// Times compare against Runner.SimulationTime, like the lobby countdown.
     ///
-    ///   Waiting   -> every player's NetworkRacer reports Ready (or Max Wait runs out)
+    ///   Waiting   -> every player's NetworkRacer reports Ready (or Max Wait runs out);
+    ///                bots fill the empty grid slots (see <see cref="BotRacer"/>)
     ///   Countdown -> "Get ready", then 3-2-1
     ///   Racing    -> until everyone finishes, or Finish Grace after the first finisher
     ///   Results   -> standings, then back to the lobby after Results Seconds
@@ -41,6 +42,8 @@ namespace CommodoreCircuit.Race
         [SerializeField] private bool returnToLobby = true;
         [Tooltip("A pause resumes by itself after this many seconds, so one player can't hold up the race. 0 = never.")]
         [SerializeField, Min(0f)] private float maxPauseSeconds = 60f;
+        [Tooltip("Bots fill the grid up to Fill To racers. The master drives them; everyone else sees their state.")]
+        [SerializeField] private BotSettings bots = new BotSettings();
 
         [Networked] private RacePhase NetPhase { get; set; }
         [Networked] private float WaitStart { get; set; }
@@ -50,7 +53,10 @@ namespace CommodoreCircuit.Race
         [Networked] private int NetLaps { get; set; }
         [Networked] private PlayerRef PausedBy { get; set; }
         [Networked] private float PauseStart { get; set; }
+        [Networked] private int BotCount { get; set; }
+        [Networked, Capacity(BotSettings.MaxBots)] private NetworkArray<BotState> BotStates => default;
 
+        private readonly List<BotRacer> botRacers = new List<BotRacer>();
         private bool loadingLobby;
         private bool Live => Object && Object.IsValid;
         private float Now => Runner ? Runner.SimulationTime : 0f;
@@ -124,12 +130,14 @@ namespace CommodoreCircuit.Race
 
         public override void Despawned(NetworkRunner runner, bool hasState)
         {
+            ClearBots();
             RaceSession.Unregister(this);
             if (Instance == this) Instance = null;
         }
 
         private void OnDestroy()
         {
+            ClearBots();
             RaceSession.Unregister(this);
             if (Instance == this) Instance = null;
         }
@@ -140,6 +148,7 @@ namespace CommodoreCircuit.Race
             // object to the new master and it carries on from the stored deadlines.
             if (!HasStateAuthority) return;
             float now = Now;
+            SaveBots();
 
             // Nothing moves on while paused. Resume by itself if the player who paused
             // left, or the pause has gone on too long.
@@ -160,6 +169,7 @@ namespace CommodoreCircuit.Race
                     int ready = Racers().Count(r => r.Ready);
                     if (players > 0 && (ready >= players || now - WaitStart >= maxWaitForPlayers))
                     {
+                        SpawnBots(players);
                         GoTime = now + getReadySeconds + countdownSeconds;
                         NetPhase = RacePhase.Countdown;
                     }
@@ -202,6 +212,76 @@ namespace CommodoreCircuit.Race
             }
         }
 
+        public override void Render() => SyncBots();
+
+        // Fill the grid up to Fill To racers. Bots take the grid slots no player has.
+        private void SpawnBots(int players)
+        {
+            var track = RaceTrack.Instance;
+            int count = Mathf.Clamp(bots.fillTo - players, 0, BotSettings.MaxBots);
+            if (track == null || !track.IsReady) count = 0;
+
+            var lobby = FusionPlayerSpawnerAndLobbyController.Instance;
+            var taken = new HashSet<int>();
+            foreach (var p in Runner.ActivePlayers)
+                taken.Add(lobby ? lobby.SpawnPlayers.IndexOf(p) : 0);
+
+            int slot = 0;
+            for (int i = 0; i < count; i++)
+            {
+                while (taken.Contains(slot)) slot++;
+                BotStates.Set(i, BotRacer.StartState(track.GridPose(slot++), track));
+            }
+            BotCount = count;
+            if (count > 0) Debug.Log($"[Race] {players} player(s), adding {count} bot(s).", this);
+        }
+
+        // Every client keeps one BotRacer per bot. The master's drive themselves and SaveBots
+        // sends their state; everyone else's follow it. If the master leaves, the new
+        // master's copies pick up from the last state and carry on driving.
+        private void SyncBots()
+        {
+            int count = Live ? BotCount : 0;
+            while (botRacers.Count > count)
+            {
+                var last = botRacers[botRacers.Count - 1];
+                if (last) Destroy(last.gameObject);
+                botRacers.RemoveAt(botRacers.Count - 1);
+            }
+            for (int i = 0; i < count; i++)
+            {
+                if (i == botRacers.Count) botRacers.Add(BotRacer.Create(i, count, bots));
+                var bot = botRacers[i];
+                if (HasStateAuthority)
+                {
+                    if (!bot.Driving)
+                    {
+                        bot.Load(BotStates[i]);
+                        bot.Driving = true;
+                    }
+                }
+                else
+                {
+                    bot.Driving = false;
+                    bot.SetNetworkState(BotStates[i]);
+                }
+            }
+        }
+
+        private void SaveBots()
+        {
+            int count = Mathf.Min(BotCount, botRacers.Count);
+            for (int i = 0; i < count; i++)
+                if (botRacers[i] && botRacers[i].Driving) BotStates.Set(i, botRacers[i].Save());
+        }
+
+        private void ClearBots()
+        {
+            foreach (var bot in botRacers)
+                if (bot) Destroy(bot.gameObject);
+            botRacers.Clear();
+        }
+
         /// <summary>Racers whose player is still in the room.</summary>
         private IEnumerable<NetworkRacer> Racers()
         {
@@ -227,6 +307,20 @@ namespace CommodoreCircuit.Race
                     BestLap = r.BestLap,
                     CompletedLaps = r.CompletedLaps,
                     Distance = r.Distance,
+                });
+            }
+            for (int i = 0; i < BotCount; i++)
+            {
+                BotState b = BotStates[i];
+                into.Add(new RaceStanding
+                {
+                    DisplayName = BotRacer.NameFor(i),
+                    Color = BotRacer.ColorFor(i),
+                    Finished = b.Finished,
+                    FinishTime = b.FinishTime,
+                    BestLap = b.BestLap,
+                    CompletedLaps = b.CompletedLaps,
+                    Distance = b.Distance,
                 });
             }
             RaceSession.Rank(into);

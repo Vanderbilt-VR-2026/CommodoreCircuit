@@ -74,6 +74,21 @@ namespace CommodoreCircuit.Race
             return true;
         }
 
+        /// <summary>
+        /// The shortcut's path in world space, in race order, and the lap distances where it
+        /// leaves and rejoins the lap. Used by bots to drive it.
+        /// </summary>
+        public bool TryGetRoute(RaceTrack track, List<Vector3> worldPath, out float entry, out float exit)
+        {
+            entry = exit = 0f;
+            worldPath.Clear();
+            if (path.Count < 2 || !Prepare(track)) return false;
+            foreach (Vector3 p in path) worldPath.Add(transform.TransformPoint(p));
+            entry = entryDistance;
+            exit = Mathf.Repeat(entryDistance + span, track.LapLength);
+            return true;
+        }
+
         // Where the shortcut leaves and rejoins the lap, worked out once per track.
         private bool Prepare(RaceTrack track)
         {
