@@ -19,8 +19,9 @@ namespace CommodoreCircuit.EditorTools
     ///     as a hint that this is a way through,
     ///   - invisible walls down both sides (the buildings have no colliders of their own),
     ///   - openings in the lap's left barrier where the shortcut leaves and rejoins,
-    ///   - a passage cut through each building (BuildingTunnel), blank inside for now,
-    ///   - a TrackShortcut, so laps, positions and the wrong-way warning work through it.
+    ///   - a passage cut through each building (BuildingTunnel),
+    ///   - a TrackShortcut, so laps, positions and the wrong-way warning work through it,
+    ///   - the inside of Sarratt and Rand (RandInteriorBuilder).
     ///
     /// Run it after Build Alumni Lawn Track: that rebuilds the barriers without the openings.
     /// Running this again replaces the "Rand Shortcut" object. Undo works for the scene changes.
@@ -108,12 +109,15 @@ namespace CommodoreCircuit.EditorTools
             // Lap counting through the shortcut.
             root.AddComponent<TrackShortcut>().SetPath(center, m.floorHalfWidth);
 
+            string interior = RandInteriorBuilder.Build();
+
             EditorSceneManager.MarkSceneDirty(root.scene);
             AssetDatabase.SaveAssets();
             Selection.activeGameObject = root;
             string msg = $"Shortcut built: {PathLength(center):0} m long.\n" +
                          $"Passage cut through: {(cut.Count > 0 ? string.Join(", ", cut) : "nothing (buildings not found)")}.\n" +
                          $"{models}\n" +
+                         $"{interior}\n" +
                          $"Opened {openings} gap(s) in {MainBarrierName}.\n\nSave the scene (Cmd+S).";
             Debug.Log("Rand shortcut: " + msg);
             EditorUtility.DisplayDialog("Rand shortcut built", msg, "OK");
