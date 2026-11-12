@@ -84,6 +84,10 @@ namespace CommodoreCircuit.Scooter
         [SerializeField] private float steerSmoothSpeed = 6f;
         [Tooltip("How far the front wheel mesh visually turns.")]
         [SerializeField] private float maxSteerAngle = 28f;
+        [Tooltip("Comfort: scales how fast the scooter turns for a given steer input. 1 = the original sharpness, lower = slower, gentler turns (turning fast is a big cause of VR nausea). Drifts are scaled by its square root so they still bite.")]
+        [SerializeField, Range(0.2f, 1f)] private float steeringSensitivity = 0.6f;
+        [Tooltip("Comfort: scales how quickly the steering ramps up and back to centre. Lower = softer onset, so a twitch of the bars or stick doesn't snap the view around.")]
+        [SerializeField, Range(0.2f, 1f)] private float steeringResponse = 0.6f;
 
         [Header("Lean")]
         [Tooltip("Roll into a normal turn, in degrees. Kept small for VR.")]
@@ -91,6 +95,8 @@ namespace CommodoreCircuit.Scooter
         [Tooltip("Extra roll while drifting.")]
         [SerializeField] private float driftLeanAngle = 18f;
         [SerializeField] private float leanSmoothTime = 0.2f;
+        [Tooltip("Scales the roll into turns and drifts. 0 keeps the scooter (and your view) level, which is the most comfortable in VR. 1 = the full angles above.")]
+        [SerializeField, Range(0f, 1f)] private float leanScale = 0f;
 
         [Header("Drift")]
         [SerializeField, Range(0f, 1f)] private float driftTriggerThreshold = 0.15f;
@@ -165,6 +171,7 @@ namespace CommodoreCircuit.Scooter
         private InputAction leftGripAction;
         private InputAction rightGripAction;
         private InputAction riderHeightAction;
+        private InputAction leftStickSteerAction, rightStickSteerAction;
         private Transform riderRig;
         private bool riderHeightDirty;
         private const string RiderHeightPrefKey = "CommodoreCircuit.RiderEyeHeight";
@@ -205,6 +212,23 @@ namespace CommodoreCircuit.Scooter
         public enum BoostTier { None, Mini, Super, Ultra }
 
         public bool IsDrifting { get; private set; }
+        /// <summary>Forward speed in m/s (negative when reversing). Includes boost.</summary>
+        public float Speed => currentSpeed;
+        /// <summary>Normal top speed in m/s, before boost.</summary>
+        public float MaxSpeed => maxSpeed;
+        /// <summary>
+        /// Third-person controls: the thumbsticks steer (left or right stick, left/right) and the
+        /// handlebar grab is ignored. Triggers work the same, and either grip button drifts (A/X still do too). Set by <see cref="ThirdPersonView"/>.
+        /// </summary>
+        public bool ThirdPersonControls { get; set; }
+        /// <summary>The VR rig (head and hands) under the scooter, once the rider has been set up. Null before that and without a headset.</summary>
+        public Transform RiderRig => riderRig;
+        public Transform LeftHandAnchor => leftHandAnchor;
+        public Transform RightHandAnchor => rightHandAnchor;
+        /// <summary>Height of the rider's eyes above the scooter's origin, in metres.</summary>
+        public float RiderEyeHeight => riderEyeHeight;
+        /// <summary>Raised once the VR rider is set up (rig placed, controller models added, bars placed).</summary>
+        public event System.Action RiderSetUp;
         /// <summary>True while the ground under the scooter is rough (grass).</summary>
         public bool IsOnRoughSurface => currentSurface != null && currentSurface.SpeedMultiplier < 0.999f;
 
@@ -282,6 +306,9 @@ namespace CommodoreCircuit.Scooter
             rightGripAction = new InputAction("RightGrip", InputActionType.Value, "<XRController>{RightHand}/grip");
 
             riderHeightAction = new InputAction("RiderHeight", InputActionType.Value, "<XRController>{RightHand}/{Primary2DAxis}");
+            // Third-person controls: either thumbstick steers.
+            leftStickSteerAction = new InputAction("LeftStickSteer", InputActionType.Value, "<XRController>{LeftHand}/{Primary2DAxis}");
+            rightStickSteerAction = new InputAction("RightStickSteer", InputActionType.Value, "<XRController>{RightHand}/{Primary2DAxis}");
 
             recenterAction = new InputAction("RecenterSteering", InputActionType.Button);
             recenterAction.AddBinding("<XRController>{LeftHand}/{Primary2DAxisClick}");
@@ -305,6 +332,8 @@ namespace CommodoreCircuit.Scooter
             leftGripAction.Enable();
             rightGripAction.Enable();
             riderHeightAction.Enable();
+            leftStickSteerAction.Enable();
+            rightStickSteerAction.Enable();
             recenterAction.performed += OnRecenterPerformed;
             recenterAction.Enable();
         }
@@ -318,6 +347,8 @@ namespace CommodoreCircuit.Scooter
             leftGripAction.Disable();
             rightGripAction.Disable();
             riderHeightAction.Disable();
+            leftStickSteerAction.Disable();
+            rightStickSteerAction.Disable();
             SaveRiderHeight();
             recenterAction.performed -= OnRecenterPerformed;
             recenterAction.Disable();
@@ -407,6 +438,7 @@ namespace CommodoreCircuit.Scooter
 
             yield return new WaitForSeconds(Mathf.Max(0.5f, autoRecenterDelay));
             PlaceBarsInFrontOfRider();
+            RiderSetUp?.Invoke();
         }
 
         private void PlaceBarsInFrontOfRider()
@@ -487,7 +519,11 @@ namespace CommodoreCircuit.Scooter
             float accelInput = accelerateAction.ReadValue<float>();
             float brakeInput = brakeAction.ReadValue<float>();
             float driftInput = driftAction.ReadValue<float>();
-            float steerInput = Mathf.Clamp(ComputeHandSteerInput() + keyboardSteerAction.ReadValue<float>(), -1f, 1f);
+            // Third person: the thumb is busy on the stick, so either grip button drifts too.
+            if (ThirdPersonControls)
+                driftInput = Mathf.Max(driftInput, leftGripAction.ReadValue<float>(), rightGripAction.ReadValue<float>());
+            float padSteer = ThirdPersonControls ? ComputeStickSteerInput() : ComputeHandSteerInput();
+            float steerInput = Mathf.Clamp(padSteer + keyboardSteerAction.ReadValue<float>(), -1f, 1f);
             if (InputLocked)
             {
                 accelInput = 0f;
@@ -495,7 +531,7 @@ namespace CommodoreCircuit.Scooter
                 driftInput = 0f;
             }
 
-            smoothedSteer = Mathf.MoveTowards(smoothedSteer, steerInput, steerSmoothSpeed * Time.fixedDeltaTime);
+            smoothedSteer = Mathf.MoveTowards(smoothedSteer, steerInput, steerSmoothSpeed * steeringResponse * Time.fixedDeltaTime);
 
             // Speed is kept here, not read back off the rigidbody. Reading it
             // back mixed the drift slide into the speed and made the drift
@@ -539,7 +575,7 @@ namespace CommodoreCircuit.Scooter
             float targetSlip = IsDrifting ? driftDirection * driftSlideAngle : 0f;
             currentSlip = Mathf.MoveTowards(currentSlip, targetSlip, driftSlideCatchup * Time.fixedDeltaTime);
 
-            float rate = IsDrifting ? driftTurnRate : turnRate;
+            float rate = IsDrifting ? driftTurnRate * Mathf.Sqrt(steeringSensitivity) : turnRate * steeringSensitivity;
             float speedFactor = Mathf.Clamp01(Mathf.Abs(signedSpeed) / 4f);
             headingYaw += turnSteer * rate * speedFactor * Time.fixedDeltaTime;
 
@@ -607,7 +643,7 @@ namespace CommodoreCircuit.Scooter
             float leanTarget = 0f;
             if (Mathf.Abs(turnSteer) > 0.01f && Mathf.Abs(signedSpeed) > 0.5f)
             {
-                float leanAmount = IsDrifting ? driftLeanAngle : turnLeanAngle;
+                float leanAmount = (IsDrifting ? driftLeanAngle : turnLeanAngle) * leanScale;
                 leanTarget = -turnSteer * leanAmount * Mathf.Clamp01(Mathf.Abs(signedSpeed) / 6f);
             }
 
@@ -982,6 +1018,22 @@ namespace CommodoreCircuit.Scooter
             return Mathf.Clamp(Mathf.Sign(handlebarAngle) * beyondDeadzone / fullRange, -1f, 1f);
         }
 
+        // Third-person steering: push either thumbstick left or right. A small dead zone ignores
+        // stick drift, and the curve gives fine control near the middle and full lock at the edge.
+        private float ComputeStickSteerInput()
+        {
+            isGrabbingHandlebar = false;
+            handlebarAngle = 0f;
+
+            float left = leftStickSteerAction.ReadValue<Vector2>().x;
+            float right = rightStickSteerAction.ReadValue<Vector2>().x;
+            float x = Mathf.Abs(left) > Mathf.Abs(right) ? left : right;
+
+            const float deadzone = 0.15f;
+            float magnitude = Mathf.Max(0f, Mathf.Abs(x) - deadzone) / (1f - deadzone);
+            return Mathf.Sign(x) * Mathf.Pow(Mathf.Clamp01(magnitude), 1.3f);
+        }
+
         private bool HandsAreOnBars(Vector3 leftLocal, Vector3 rightLocal)
         {
             float halfWidth = handlebarWidth * 0.5f;
@@ -996,7 +1048,7 @@ namespace CommodoreCircuit.Scooter
         // the rider down (stick back) or up (stick forward).
         private void UpdateRiderHeight()
         {
-            if (!allowRiderHeightAdjust || riderRig == null || riderHeightAction == null) return;
+            if (!allowRiderHeightAdjust || ThirdPersonControls || riderRig == null || riderHeightAction == null) return;
 
             Vector2 stick = riderHeightAction.ReadValue<Vector2>();
             bool adjusting = Mathf.Abs(currentSpeed) < 0.5f

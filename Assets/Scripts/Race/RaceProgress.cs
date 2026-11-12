@@ -97,12 +97,22 @@ namespace CommodoreCircuit.Race
         }
         private RacePhase lastPhase = RacePhase.Waiting;
 
+        private bool expectsSession = true;
+        private float nextSessionCheck;
+
         private void Awake()
         {
             if (scooter == null) scooter = GetComponent<ScooterController>();
+            // Start locked, before the first Update, so the scooter can't creep during
+            // scene load or while the race session is still being created.
+            if (lockScooterOutsideRace && scooter) scooter.InputLocked = true;
         }
 
-        private void OnEnable() => Local = this;
+        private void OnEnable()
+        {
+            Local = this;
+            if (lockScooterOutsideRace && scooter) scooter.InputLocked = true;
+        }
 
         private void OnDisable()
         {
@@ -114,6 +124,23 @@ namespace CommodoreCircuit.Race
         {
             if (track == null) track = RaceTrack.Instance;
             var session = RaceSession.Current;
+
+            // Lock first, before any early return below. No session yet (scene still loading,
+            // or waiting for the network session to spawn) counts as "not racing", so you can't
+            // move until GO. A scene with no race session at all stays free-drive.
+            if (lockScooterOutsideRace && scooter)
+            {
+                if (session == null && Time.unscaledTime >= nextSessionCheck)
+                {
+                    nextSessionCheck = Time.unscaledTime + 1f;
+                    expectsSession = FindAnyObjectByType<LocalRaceSession>() != null
+                        || FindAnyObjectByType<NetworkRaceSession>() != null;
+                }
+                scooter.InputLocked = session != null
+                    ? session.Phase != RacePhase.Racing || Finished
+                    : expectsSession;
+            }
+
             if (track == null || !track.IsReady || session == null) return;
 
             if (session.Phase != lastPhase)
@@ -130,9 +157,6 @@ namespace CommodoreCircuit.Race
                 CheckLaps(session);
 
             UpdateWrongWay(here, session.Phase == RacePhase.Racing && !Finished);
-
-            if (lockScooterOutsideRace && scooter)
-                scooter.InputLocked = session.Phase != RacePhase.Racing || Finished;
         }
 
         private void ResetRace()
