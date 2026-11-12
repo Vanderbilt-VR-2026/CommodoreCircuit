@@ -46,7 +46,35 @@ namespace CommodoreCircuit.EditorTools
             // track frame: centre (-155.74, 4.39), axis at 29.5 deg; model base centre is (+2.75, +1.5) in that frame
             ("Oliver C. Carmichael College", "CarmichaelCollegeExterior.fbx", "Carmichael_College",
              TrackFramePoint(-155.74f, 4.39f, 29.5f, 2.75f, 1.5f), -29.5f),
+            // McGill (wings shortened to fit): front faces the track (east), wings point west.
+            ("McGill Hall", "McGillHallExterior_Fit.fbx", "McGillHallExterior_Fit",
+             new Vector2(-83.762f, 15.225f), -120.25f),
+            // West Side Row house (modelled from K.C. Potter Center; 2304G/2304I/K.C. Potter/Cumberland share
+            // the footprint). Porch-hood gable is Blender +X and faces ENE toward the walk.
+            ("2304I Vanderbilt Place", "WestSideRowHouseExterior.fbx", "WestSideRowHouseExterior",
+             TrackFramePoint(-123.21f, 30.97f, 29.7f, 1.15f, -0.375f), -29.7f),  // prefab recentres on bounds: offset back to the footprint centre
+            // Kappa Sigma (new FutureVU house): built in the footprint's own frame, front (arcade/tower) on
+            // Blender +X facing ENE toward the track. Front wall sits on the gray-box line; the barrier is close there.
+            ("Kappa Sigma House", "KappaSigmaHouseExterior.fbx", "KappaSigmaHouseExterior",
+             TrackFramePoint(-114.22f, -179.45f, 30.3f, -0.815f, 0.085f), -30.3f),  // same recentring offset
+            // Tri Delt: colonial with 4-column portico; front is Blender -X (faces WSW toward the track/walk).
+            ("Delta Delta Delta House", "TriDeltHouseExterior.fbx", "TriDeltHouseExterior",
+             TrackFramePoint(-137.15f, -53.16f, 30.3f, 1.12f, 0f), -30.3f),
         };
+
+        // Buildings modelled straight from the map footprint: placed on the gray box's centre and
+        // turned/mirrored to whichever of the 8 options covers the gray box best.
+        private static readonly (string grayBox, string fbx, string part)[] FootprintBuildings =
+        {
+            ("Rand Hall", "RandHallExterior.fbx", "RandHallExterior"),
+            ("Buttrick Hall", "ButtrickHallExterior.fbx", "ButtrickHallExterior"),
+            ("Sarratt Student Center", "SarrattStudentCenterExterior.fbx", "SarrattStudentCenterExterior"),
+            ("Power House", "PowerHouseExterior.fbx", "PowerHouseExterior"),
+            ("Bishop Joseph Johnson Center", "BishopJosephJohnsonCenterExterior.fbx", "BishopJosephJohnsonCenterExterior"),
+        };
+
+        // Exact buildings whose yaw is fixed (front must face the walk); no 90-degree search.
+        private static readonly HashSet<string> FixedYaw = new HashSet<string> { "2304I Vanderbilt Place", "Kappa Sigma House", "Delta Delta Delta House" };
 
         private static Vector2 TrackFramePoint(float cx, float cz, float deg, float a, float b)
         {
@@ -58,7 +86,6 @@ namespace CommodoreCircuit.EditorTools
         // Prefabs made but not placed yet.
         private static readonly (string fbx, string part)[] Extras =
         {
-            ("McGillHallExterior.fbx", "McGillHallExterior"),
             ("WestEndTower.fbx", "WestEndTower"),
         };
 
@@ -90,6 +117,11 @@ namespace CommodoreCircuit.EditorTools
 
             // Props
             RouteData route = LoadRoute();
+            foreach (var b in FootprintBuildings)
+            {
+                GameObject prefab = MakePrefab(b.fbx, b.part, report);
+                if (prefab != null) report.Add(SwapFootprint(b.grayBox, prefab, route));
+            }
             foreach (var b in ExactBuildings)
             {
                 GameObject prefab = MakePrefab(b.fbx, b.part, report);
@@ -107,9 +139,13 @@ namespace CommodoreCircuit.EditorTools
             }
             if (trees.Count > 0) report.Add(SwapScatter("Trees", "Tree_", trees.ToArray(), route, true));
 
+            // The new Rand Hall and Sarratt models are solid: cut the shortcut back through them.
+            report.Add(RandShortcutBuilder.CarveModelTunnels());
+
             EditorSceneManager.MarkSceneDirty(EditorSceneManager.GetActiveScene());
             string msg = string.Join("\n", report);
             Debug.Log("Swap In Campus Models:\n" + msg);
+            try { File.WriteAllText("Logs/CampusModelSwap_report.txt", DateTime.Now + "\n" + msg); } catch { }
             EditorUtility.DisplayDialog("Campus models swapped in", msg + "\n\nSave the scene (Cmd+S).", "OK");
         }
 
@@ -246,7 +282,8 @@ namespace CommodoreCircuit.EditorTools
             }
             var samples = CorridorSamples(route, pivot, 60f);
             float bestYaw = frameYaw; int best = int.MaxValue;
-            for (int k = 0; k < 4; k++)
+            int turns = FixedYaw.Contains(grayName) ? 1 : 4;
+            for (int k = 0; k < turns; k++)
             {
                 float yaw = frameYaw + 90f * k;
                 inst.transform.SetPositionAndRotation(new Vector3(pivot.x, 0f, pivot.y), Quaternion.Euler(0f, yaw, 0f));
@@ -262,9 +299,79 @@ namespace CommodoreCircuit.EditorTools
             GameObjectUtility.SetStaticEditorFlags(inst, StaticEditorFlags.BatchingStatic);
 
             if (gray != null) { Undo.RecordObject(gray, "Hide gray box"); gray.SetActive(false); }
-            return best == 0
+            Bounds wb = WorldBounds(inst);
+            string size = $" Size {wb.size.x:0.0} x {wb.size.y:0.0} (tall) x {wb.size.z:0.0} m.";
+            return (best == 0
                 ? $"{grayName}: placed on the track (yaw {bestYaw:0.0}); the track runs clear through both gates."
-                : $"{grayName}: placed (yaw {bestYaw:0.0}) but {best} of {samples.Count} track points touch the building. Check the gates.";
+                : $"{grayName}: placed (yaw {bestYaw:0.0}) but {best} of {samples.Count} track points touch the building. Check the gates.") + size;
+        }
+
+        private static string SwapFootprint(string grayName, GameObject prefab, RouteData route)
+        {
+            GameObject gray = FindInScene(grayName);
+            if (gray == null) return $"{grayName}: gray box not found in this scene.";
+            Transform parent = gray.transform.parent;
+            if (parent != null)
+            {
+                Transform old = parent.Find(grayName + ModelSuffix);
+                if (old != null) Undo.DestroyObjectImmediate(old.gameObject);
+            }
+            bool wasActive = gray.activeSelf; gray.SetActive(true);
+            Bounds gb = WorldBounds(gray);
+            var grayCols = new List<MeshCollider>();
+            foreach (MeshFilter mf in gray.GetComponentsInChildren<MeshFilter>(true))
+            { var mc = mf.gameObject.AddComponent<MeshCollider>(); mc.sharedMesh = mf.sharedMesh; grayCols.Add(mc); }
+
+            GameObject inst = (GameObject)PrefabUtility.InstantiatePrefab(prefab, gray.scene);
+            Undo.RegisterCreatedObjectUndo(inst, "Swap building");
+            inst.name = grayName + ModelSuffix;
+            if (parent != null) inst.transform.SetParent(parent, true);
+            var modelCols = new List<MeshCollider>();
+            foreach (MeshFilter mf in inst.GetComponentsInChildren<MeshFilter>(true))
+            { var mc = mf.gameObject.AddComponent<MeshCollider>(); mc.sharedMesh = mf.sharedMesh; modelCols.Add(mc); }
+
+            Vector3 centre = new Vector3(gb.center.x, 0f, gb.center.z);
+            float bestScore = -1f; float bestYaw = 0f; bool bestMirror = false;
+            for (int mirror = 0; mirror < 2; mirror++)
+                for (int k = 0; k < 4; k++)
+                {
+                    inst.transform.SetPositionAndRotation(centre, Quaternion.Euler(0f, 90f * k, 0f));
+                    inst.transform.localScale = new Vector3(mirror == 1 ? -1f : 1f, 1f, 1f);
+                    Physics.SyncTransforms();
+                    int agree = 0, total = 0;
+                    for (float x = gb.min.x; x <= gb.max.x; x += 2f)
+                        for (float z = gb.min.z; z <= gb.max.z; z += 2f)
+                        {
+                            bool g = false, m = false;
+                            foreach (RaycastHit h in Physics.RaycastAll(new Vector3(x, 60f, z), Vector3.down, 70f, ~0, QueryTriggerInteraction.Ignore))
+                            {
+                                if (grayCols.Contains(h.collider as MeshCollider)) g = true;
+                                if (modelCols.Contains(h.collider as MeshCollider)) m = true;
+                            }
+                            if (g || m) { total++; if (g && m) agree++; }
+                        }
+                    float score = total > 0 ? (float)agree / total : 0f;
+                    if (score > bestScore) { bestScore = score; bestYaw = 90f * k; bestMirror = mirror == 1; }
+                }
+            foreach (var c in grayCols) UnityEngine.Object.DestroyImmediate(c);
+            foreach (var c in modelCols) UnityEngine.Object.DestroyImmediate(c);
+            inst.transform.SetPositionAndRotation(centre, Quaternion.Euler(0f, bestYaw, 0f));
+            inst.transform.localScale = new Vector3(bestMirror ? -1f : 1f, 1f, 1f);
+            GameObjectUtility.SetStaticEditorFlags(inst, StaticEditorFlags.BatchingStatic);
+            Undo.RecordObject(gray, "Hide gray box"); gray.SetActive(false);
+
+            Physics.SyncTransforms();
+            var temp = new List<MeshCollider>();
+            foreach (MeshFilter mf in inst.GetComponentsInChildren<MeshFilter>(true))
+            { var mc = mf.gameObject.AddComponent<MeshCollider>(); mc.sharedMesh = mf.sharedMesh; temp.Add(mc); }
+            Physics.SyncTransforms();
+            var samples = CorridorSamples(route, new Vector2(centre.x, centre.z), 80f);
+            int hits = 0;
+            foreach (Vector2 s in samples)
+                foreach (RaycastHit h in Physics.RaycastAll(new Vector3(s.x, 6f, s.y), Vector3.down, 5.8f, ~0, QueryTriggerInteraction.Ignore))
+                    if (temp.Contains(h.collider as MeshCollider)) { hits++; break; }
+            foreach (var c in temp) UnityEngine.Object.DestroyImmediate(c);
+            return $"{grayName}: matched to its footprint ({bestScore:P0} overlap, yaw {bestYaw:0}, mirrored {bestMirror}); {hits} of {samples.Count} track points touch it.";
         }
 
         private static List<Vector2> CorridorSamples(RouteData r, Vector2 near, float radius)
@@ -447,7 +554,7 @@ namespace CommodoreCircuit.EditorTools
             mi.animationType = ModelImporterAnimationType.None;
             // Single-object Blender exports keep their "stand up" rotation on the root node, which
             // Unity drops; baking the axis conversion into the mesh keeps them upright.
-            if (assetPath.EndsWith("CarmichaelCollegeExterior.fbx")) mi.bakeAxisConversion = true;
+            if (assetPath.EndsWith("CarmichaelCollegeExterior.fbx") || assetPath.EndsWith("McGillHallExterior_Fit.fbx") || assetPath.EndsWith("RandHallExterior.fbx") || assetPath.EndsWith("ButtrickHallExterior.fbx") || assetPath.EndsWith("SarrattStudentCenterExterior.fbx") || assetPath.EndsWith("PowerHouseExterior.fbx") || assetPath.EndsWith("BishopJosephJohnsonCenterExterior.fbx") || assetPath.EndsWith("WestSideRowHouseExterior.fbx") || assetPath.EndsWith("KappaSigmaHouseExterior.fbx") || assetPath.EndsWith("TriDeltHouseExterior.fbx")) mi.bakeAxisConversion = true;
         }
 
         // Bump when the processing below changes, so Unity reimports the models on every machine.

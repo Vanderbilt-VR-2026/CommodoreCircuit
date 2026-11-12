@@ -33,6 +33,9 @@ namespace CommodoreCircuit.EditorTools
         private const string MatDir = "Assets/CampusTrack/Materials";
         private const string RootName = "Rand Shortcut";
         private const string MainBarrierName = "Barrier Left";
+        // Kept apart from MeshDir, which Build wipes. Name suffix CampusModelSwapper gives its models.
+        private const string ModelTunnelDir = "Assets/CommodoreCircuit/Environment/Tunnels";
+        private const string ModelSuffix = " (Model)";
 
         // Between the lap's run-off (0.08) and road (0.11): it shows over the run-off and
         // tucks under the road where the two overlap at each end.
@@ -99,6 +102,9 @@ namespace CommodoreCircuit.EditorTools
                 if (BuildingTunnel.Cut(building, center, left, m.tunnelHalfWidth, m.tunnelHeight, MeshDir, closed: false))
                     cut.Add(building);
 
+            // The buildings may be imported models (CampusModelSwapper) instead of gray boxes.
+            string models = CarveModelTunnels();
+
             // Lap counting through the shortcut.
             root.AddComponent<TrackShortcut>().SetPath(center, m.floorHalfWidth);
 
@@ -107,6 +113,7 @@ namespace CommodoreCircuit.EditorTools
             Selection.activeGameObject = root;
             string msg = $"Shortcut built: {PathLength(center):0} m long.\n" +
                          $"Passage cut through: {(cut.Count > 0 ? string.Join(", ", cut) : "nothing (buildings not found)")}.\n" +
+                         $"{models}\n" +
                          $"Opened {openings} gap(s) in {MainBarrierName}.\n\nSave the scene (Cmd+S).";
             Debug.Log("Rand shortcut: " + msg);
             EditorUtility.DisplayDialog("Rand shortcut built", msg, "OK");
@@ -117,6 +124,44 @@ namespace CommodoreCircuit.EditorTools
         // Removes the parts of every "Barrier Left" path that fall between the shortcut's walls
         // and splits what's left into separate open paths. Safe to run again: once a gap is
         // open there's nothing left inside it to remove.
+        [MenuItem("CommodoreCircuit/Environment/Carve Shortcut Through Building Models")]
+        private static void CarveMenu()
+        {
+            string msg = CarveModelTunnels();
+            Debug.Log(msg);
+            EditorUtility.DisplayDialog("Shortcut passage", msg + "\n\nSave the scene (Cmd+S).", "OK");
+        }
+
+        /// <summary>
+        /// Cuts the shortcut's passage through the imported building models (Rand Hall (Model),
+        /// Sarratt Student Center (Model)) that CampusModelSwapper puts in place of the gray boxes.
+        /// Called by Build and by CampusModelSwapper after a swap, so the shortcut stays open.
+        /// </summary>
+        public static string CarveModelTunnels()
+        {
+            var json = AssetDatabase.LoadAssetAtPath<TextAsset>(DataPath);
+            if (json == null) return $"Shortcut passage: {DataPath} not found.";
+            Data data = JsonUtility.FromJson<Data>(json.text);
+            Vector3[] center = ToPoints(data.centerline);
+            Vector3[] left = LeftVectors(center, false);
+            EnsureFolder("Assets/CommodoreCircuit");
+            EnsureFolder("Assets/CommodoreCircuit/Environment");
+            EnsureFolder(ModelTunnelDir);
+
+            var cut = new List<string>();
+            foreach (string building in data.buildings)
+            {
+                GameObject model = GameObject.Find(building + ModelSuffix);
+                if (model != null && BuildingTunnel.CutModel(model, center, left, data.meta.tunnelHalfWidth,
+                        data.meta.tunnelHeight, ModelTunnelDir, closed: false))
+                    cut.Add(building);
+            }
+            if (cut.Count == 0) return "Shortcut passage: no building models on the shortcut in this scene.";
+            EditorSceneManager.MarkSceneDirty(EditorSceneManager.GetActiveScene());
+            AssetDatabase.SaveAssets();
+            return $"Shortcut passage cut through the models of {string.Join(" and ", cut)}.";
+        }
+
         private static int OpenLapBarrier(Vector3[] shortcut, float wallOffset)
         {
             var paths = new List<BarrierPath>();

@@ -14,6 +14,10 @@ namespace CommodoreCircuit.EditorTools
     /// The original mesh asset is never changed; the result is saved as a new asset.
     /// The path is the closed lap by default; pass closed = false for an open path
     /// such as a shortcut, so its last point isn't joined back to its first.
+    ///
+    /// <see cref="CutModel"/> does the same for an imported building model (the FBX buildings
+    /// CampusModelSwapper puts in place of the gray boxes), whose meshes aren't Y-up or may be
+    /// mirrored: it cuts in world space and converts back.
     /// </summary>
     public static class BuildingTunnel
     {
@@ -149,8 +153,165 @@ namespace CommodoreCircuit.EditorTools
             return true;
         }
 
+        /// <summary>
+        /// Cuts the passage through every mesh of an imported building model. Always starts from
+        /// the meshes in the model's prefab, so re-running is safe. Results are saved in saveDir.
+        /// </summary>
+        public static bool CutModel(GameObject model, Vector3[] center, Vector3[] left, float halfWidth, float height, string saveDir, bool closed = true)
+        {
+            Renderer[] renderers = model.GetComponentsInChildren<Renderer>(true);
+            if (renderers.Length == 0) return false;
+            float ground = renderers[0].bounds.min.y;
+            foreach (Renderer r in renderers) ground = Mathf.Min(ground, r.bounds.min.y);
+
+            bool cut = false;
+            int part = 0;
+            foreach (MeshFilter mf in model.GetComponentsInChildren<MeshFilter>(true))
+            {
+                string name = model.name.Replace(" (Model)", "").Replace(' ', '_') + (part++ > 0 ? "_" + part : "");
+                if (CutWorld(mf, name, center, left, halfWidth, ground, ground + height, saveDir, closed)) cut = true;
+            }
+            if (!cut) Debug.Log($"Tunnel: track does not cross '{model.name}'.");
+            return cut;
+        }
+
+        private static bool CutWorld(MeshFilter mf, string name, Vector3[] center, Vector3[] left, float halfWidth,
+            float ground, float top, string saveDir, bool closed)
+        {
+            // The prefab's mesh, not one we cut earlier.
+            MeshFilter original = PrefabUtility.GetCorrespondingObjectFromOriginalSource(mf);
+            Mesh src = original != null && original.sharedMesh != null ? original.sharedMesh : mf.sharedMesh;
+            if (src == null) return false;
+
+            Matrix4x4 toWorld = mf.transform.localToWorldMatrix, toLocal = toWorld.inverse;
+            // A mirrored model's triangles wind the other way in world space. Flip them while
+            // cutting, so everything (including the new walls) agrees, and flip back at the end.
+            bool mirrored = toWorld.determinant < 0f;
+
+            Vector3[] verts = src.vertices;
+            Vector3[] world = new Vector3[verts.Length];
+            for (int i = 0; i < verts.Length; i++) world[i] = toWorld.MultiplyPoint3x4(verts[i]);
+            Bounds b = GeometryUtility.CalculateBounds(world, Matrix4x4.identity);
+
+            List<Vector3[]> quads = new List<Vector3[]>();
+            int n = center.Length;
+            int segments = closed ? n : n - 1;
+            for (int i = 0; i < segments; i++)
+            {
+                int j = (i + 1) % n;
+                Vector3 dir = (center[j] - center[i]).normalized * 0.1f;
+                Vector3[] q =
+                {
+                    center[i] - dir + left[i] * halfWidth,
+                    center[j] + dir + left[j] * halfWidth,
+                    center[j] + dir - left[j] * halfWidth,
+                    center[i] - dir - left[i] * halfWidth,
+                };
+                float minX = Mathf.Min(q[0].x, q[1].x, q[2].x, q[3].x), maxX = Mathf.Max(q[0].x, q[1].x, q[2].x, q[3].x);
+                float minZ = Mathf.Min(q[0].z, q[1].z, q[2].z, q[3].z), maxZ = Mathf.Max(q[0].z, q[1].z, q[2].z, q[3].z);
+                if (maxX < b.min.x || minX > b.max.x || maxZ < b.min.z || minZ > b.max.z) continue;
+                quads.Add(q);
+            }
+            if (quads.Count == 0) return false;
+
+            Vector2[] uvs = src.uv.Length == verts.Length ? src.uv : new Vector2[verts.Length];
+            int subCount = src.subMeshCount;
+            List<List<V>>[] polys = new List<List<V>>[subCount];
+            int before = 0;
+            for (int s = 0; s < subCount; s++)
+            {
+                polys[s] = new List<List<V>>();
+                int[] tris = src.GetTriangles(s);
+                before += tris.Length / 3;
+                for (int k = 0; k < tris.Length; k += 3)
+                {
+                    var poly = new List<V>
+                    {
+                        new V { p = world[tris[k]], uv = uvs[tris[k]] },
+                        new V { p = world[tris[k + 1]], uv = uvs[tris[k + 1]] },
+                        new V { p = world[tris[k + 2]], uv = uvs[tris[k + 2]] },
+                    };
+                    if (mirrored) poly.Reverse();
+                    polys[s].Add(poly);
+                }
+            }
+
+            bool removed = false;
+            foreach (Vector3[] q in quads)
+            {
+                Pl[] prism = PrismPlanes(q, top, ground - 5f);
+                for (int s = 0; s < subCount; s++)
+                {
+                    List<List<V>> kept = new List<List<V>>();
+                    foreach (List<V> poly in polys[s]) SubtractConvex(poly, prism, kept);
+                    if (kept.Count != polys[s].Count) removed = true;
+                    polys[s] = kept;
+                }
+            }
+            // The corridor only grazed this part's bounds: leave it alone.
+            if (!removed) return false;
+
+            List<Vector2> hull = FootprintHull(world);
+            int wallSub = 0;
+            MeshRenderer mr = mf.GetComponent<MeshRenderer>();
+            if (mr != null)
+                for (int s = 0; s < mr.sharedMaterials.Length && s < subCount; s++)
+                    if (mr.sharedMaterials[s] != null && mr.sharedMaterials[s].name.Contains("Brick")) { wallSub = s; break; }
+
+            foreach (Vector3[] q in quads)
+            {
+                List<Vector2> ceil = ClipConvex(new List<Vector2> { XZ(q[0]), XZ(q[1]), XZ(q[2]), XZ(q[3]) }, hull);
+                for (int k = 1; k + 1 < ceil.Count; k++)
+                    AddTri(polys[wallSub], P(ceil[0], top), P(ceil[k], top), P(ceil[k + 1], top), Vector3.down);
+                Vector3 mid = (q[0] + q[1] + q[2] + q[3]) * 0.25f;
+                AddWall(polys[wallSub], q[0], q[1], hull, top, mid, ground);
+                AddWall(polys[wallSub], q[3], q[2], hull, top, mid, ground);
+            }
+
+            List<Vector3> outV = new List<Vector3>();
+            List<Vector2> outUV = new List<Vector2>();
+            List<int>[] outT = new List<int>[subCount];
+            for (int s = 0; s < subCount; s++)
+            {
+                outT[s] = new List<int>();
+                foreach (List<V> poly in polys[s])
+                {
+                    if (mirrored) poly.Reverse();
+                    for (int k = 1; k + 1 < poly.Count; k++)
+                    {
+                        V a = poly[0], c1 = poly[k], c2 = poly[k + 1];
+                        if (Vector3.Cross(c1.p - a.p, c2.p - a.p).sqrMagnitude < 1e-8f) continue;
+                        outT[s].Add(outV.Count); outV.Add(toLocal.MultiplyPoint3x4(a.p)); outUV.Add(a.uv);
+                        outT[s].Add(outV.Count); outV.Add(toLocal.MultiplyPoint3x4(c1.p)); outUV.Add(c1.uv);
+                        outT[s].Add(outV.Count); outV.Add(toLocal.MultiplyPoint3x4(c2.p)); outUV.Add(c2.uv);
+                    }
+                }
+            }
+
+            Mesh m = new Mesh { name = name + " (Tunnel)", indexFormat = IndexFormat.UInt32 };
+            m.SetVertices(outV);
+            m.SetUVs(0, outUV);
+            m.subMeshCount = subCount;
+            for (int s = 0; s < subCount; s++) m.SetTriangles(outT[s], s);
+            m.RecalculateNormals();
+            m.RecalculateBounds();
+
+            string path = saveDir + "/" + name + "_Tunnel.asset";
+            AssetDatabase.DeleteAsset(path);
+            LightmapUVs.Generate(m);
+            AssetDatabase.CreateAsset(m, path);
+
+            Undo.RecordObject(mf, "Cut tunnel");
+            mf.sharedMesh = m;
+            MeshCollider mc = mf.GetComponent<MeshCollider>();
+            if (mc != null) { Undo.RecordObject(mc, "Cut tunnel"); mc.sharedMesh = m; }
+            EditorUtility.SetDirty(mf);
+            Debug.Log($"Tunnel: cut through {mf.name} ({before} triangles before).");
+            return true;
+        }
+
         // Planes of the corridor prism; normals point OUT of the volume.
-        private static Pl[] PrismPlanes(Vector3[] q, float height)
+        private static Pl[] PrismPlanes(Vector3[] q, float height, float floor = -5f)
         {
             Vector3 c = (q[0] + q[1] + q[2] + q[3]) * 0.25f;
             List<Pl> planes = new List<Pl>();
@@ -165,7 +326,7 @@ namespace CommodoreCircuit.EditorTools
                 planes.Add(new Pl { n = nrm, d = Vector3.Dot(nrm, mid) });
             }
             planes.Add(new Pl { n = Vector3.up, d = height });
-            planes.Add(new Pl { n = Vector3.down, d = 5f }); // floor far below ground
+            planes.Add(new Pl { n = Vector3.down, d = -floor }); // floor far below ground
             return planes.ToArray();
         }
 
@@ -201,10 +362,10 @@ namespace CommodoreCircuit.EditorTools
             }
         }
 
-        private static void AddWall(List<List<V>> into, Vector3 a, Vector3 b, List<Vector2> hull, float height, Vector3 tunnelMid)
+        private static void AddWall(List<List<V>> into, Vector3 a, Vector3 b, List<Vector2> hull, float height, Vector3 tunnelMid, float bottom = 0f)
         {
             if (!ClipSegment(XZ(a), XZ(b), hull, out Vector2 s0, out Vector2 s1)) return;
-            Vector3 p0 = P(s0, 0f), p1 = P(s1, 0f), p2 = P(s1, height), p3 = P(s0, height);
+            Vector3 p0 = P(s0, bottom), p1 = P(s1, bottom), p2 = P(s1, height), p3 = P(s0, height);
             Vector3 inward = tunnelMid - (p0 + p1) * 0.5f; inward.y = 0f;
             AddTri(into, p0, p1, p2, inward);
             AddTri(into, p0, p2, p3, inward);
