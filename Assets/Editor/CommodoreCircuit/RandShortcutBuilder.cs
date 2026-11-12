@@ -361,6 +361,7 @@ namespace CommodoreCircuit.EditorTools
                 mesh.RecalculateNormals();
             }
             mesh.RecalculateBounds();
+            LightmapUVs.Generate(mesh);
             AssetDatabase.CreateAsset(mesh, MeshDir + "/" + name + ".asset");
             return mesh;
         }

@@ -138,6 +138,7 @@ namespace CommodoreCircuit.EditorTools
             // One file per building, so several buildings can be cut into the same folder.
             string path = saveDir + "/" + (buildingName.Contains("Carmichael") ? "Carmichael" : buildingName.Replace(' ', '_')) + "_Tunnel.asset";
             AssetDatabase.DeleteAsset(path);
+            LightmapUVs.Generate(m);
             AssetDatabase.CreateAsset(m, path);
 
             Undo.RecordObject(mf, "Cut tunnel");

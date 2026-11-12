@@ -305,6 +305,7 @@ namespace CommodoreCircuit.EditorTools
             string unique = key;
             int k = 2;
             while (!UsedMeshNames.Add(unique)) unique = key + "_" + k++;
+            LightmapUVs.Generate(m);
             AssetDatabase.CreateAsset(m, unique + ".asset");
             return m;
         }
