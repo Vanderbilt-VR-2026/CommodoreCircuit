@@ -73,6 +73,7 @@ namespace CommodoreCircuit.Interactables.EditorTools
             var hazard = mover.AddComponent<Hazard>();
             hazard.slowDuration = 1f;
             hazard.slowMultiplier = 0.4f;
+            hazard.knockback = 3f;   // sideways glance-off push, m/s
             mover.AddComponent<SquirrelAnimator>().model = model.transform;
             Triggers(mover);
         }
@@ -98,7 +99,7 @@ namespace CommodoreCircuit.Interactables.EditorTools
             var hazard = mover.AddComponent<Hazard>();
             hazard.slowDuration = 2f;
             hazard.slowMultiplier = 0.25f;
-            hazard.knockback = 3f;
+            hazard.knockback = 4.5f;
             Triggers(mover);
         }
 
@@ -137,6 +138,7 @@ namespace CommodoreCircuit.Interactables.EditorTools
             var hazard = mover.AddComponent<Hazard>();
             hazard.slowDuration = 0.5f;
             hazard.slowMultiplier = 0.6f;
+            hazard.knockback = 2.5f;   // sideways glance-off push, m/s
             Triggers(mover);
         }
 
@@ -160,6 +162,7 @@ namespace CommodoreCircuit.Interactables.EditorTools
             var hazard = mover.AddComponent<Hazard>();
             hazard.slowDuration = 1f;
             hazard.slowMultiplier = 0.4f;
+            hazard.knockback = 4f;   // sideways glance-off push, m/s
             hazard.rehitCooldown = 3f;
             mover.AddComponent<FreshmanAnimator>().model = model.transform;
             Triggers(mover);

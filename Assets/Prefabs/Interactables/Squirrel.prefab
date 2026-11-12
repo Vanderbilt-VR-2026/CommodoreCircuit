@@ -241,7 +241,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::CommodoreCircuit.Interactables.Hazard
   slowDuration: 1
   slowMultiplier: 0.4
-  knockback: 0
+  knockback: 3
   rehitCooldown: 1.5
   hitAudio: {fileID: 3976910063327687417}
   onHit:

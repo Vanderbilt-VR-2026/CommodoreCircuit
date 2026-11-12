@@ -42,6 +42,8 @@ namespace CommodoreCircuit.Interactables
         static readonly List<InputDevice> Controllers = new List<InputDevice>();
 
         public bool IsShielded => Time.time < shieldUntil;
+        /// <summary>Seconds of shield left (0 when not shielded).</summary>
+        public float ShieldTimeLeft => Mathf.Max(0f, shieldUntil - Time.time);
         public bool IsSlowed => Time.time < slowUntil;
         public bool IsBoosting => Time.time < boostUntil;
 

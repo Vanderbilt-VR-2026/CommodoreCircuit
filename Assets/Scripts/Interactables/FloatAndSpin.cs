@@ -5,7 +5,9 @@ namespace CommodoreCircuit.Interactables
     /// <summary>
     /// Power-up idle motion: bob, spin around world up, optional end-over-end flip,
     /// and an orbiting sparkle ring. Animates <see cref="target"/> (the model child)
-    /// so the trigger collider on the root stays put.
+    /// so the trigger collider on the root stays put. The spin is added on top of the
+    /// model's own rest rotation, so a model stood on its edge (the cookie, the card)
+    /// stays on its edge instead of being laid flat.
     /// </summary>
     public class FloatAndSpin : MonoBehaviour
     {
@@ -27,13 +29,18 @@ namespace CommodoreCircuit.Interactables
         public float sparkleOrbitSpeed = 70f;
 
         Vector3 restPos;
+        Quaternion restRot = Quaternion.identity;
         float phase;
         float yaw, flip;
 
         void Awake()
         {
             if (target == null && transform.childCount > 0) target = transform.GetChild(0);
-            if (target != null) restPos = target.localPosition;
+            if (target != null)
+            {
+                restPos = target.localPosition;
+                restRot = target.localRotation;
+            }
             phase = Random.value * Mathf.PI * 2f;       // de-sync neighbours
             yaw = Random.value * 360f;
         }
@@ -45,7 +52,7 @@ namespace CommodoreCircuit.Interactables
             target.localPosition = restPos + Vector3.up * (Mathf.Sin(t) * bobHeight);
             yaw += spinSpeed * Time.deltaTime;
             flip += flipSpeed * Time.deltaTime;
-            target.localRotation = Quaternion.Euler(0f, yaw, 0f) * Quaternion.Euler(flip, 0f, 0f);
+            target.localRotation = Quaternion.Euler(0f, yaw, 0f) * Quaternion.Euler(flip, 0f, 0f) * restRot;
             if (sparkles != null) sparkles.Rotate(Vector3.forward, sparkleOrbitSpeed * Time.deltaTime, Space.Self);
         }
     }

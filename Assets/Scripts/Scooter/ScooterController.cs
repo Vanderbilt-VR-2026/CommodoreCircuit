@@ -160,8 +160,8 @@ namespace CommodoreCircuit.Scooter
         [SerializeField] private float hazardSlowDeceleration = 25f;
         [Tooltip("How fast a hazard's knockback push dies away (m/s per second). Keep it quick and small for comfort.")]
         [SerializeField] private float knockbackDecay = 12f;
-        [Tooltip("Largest sideways knockback speed allowed (m/s).")]
-        [SerializeField] private float maxKnockbackSpeed = 3f;
+        [Tooltip("Largest sideways push a hazard can give (m/s). The scooter slides about speed squared / (2 x Knockback Decay) metres: 4.5 m/s is ~0.85 m.")]
+        [SerializeField] private float maxHazardPushSpeed = 5f;
 
         private RacerEffects racerEffects;
         private Vector3 knockbackVelocity;
@@ -236,6 +236,13 @@ namespace CommodoreCircuit.Scooter
         public BoostTier ChargeTier { get; private set; } = BoostTier.None;
         /// <summary>Level of the boost that is running now, or the last one that ran.</summary>
         public BoostTier ActiveBoostTier { get; private set; } = BoostTier.None;
+        /// <summary>Drift charge from 0 (none) to 1 (Ultra reached). Drops back to 0 when the drift ends.</summary>
+        public float DriftCharge01 => ultraChargeTime > 0f ? Mathf.Clamp01(driftCharge / ultraChargeTime) : 0f;
+        /// <summary>Where Mini and Super sit on the 0-1 charge scale (Ultra is 1).</summary>
+        public float MiniCharge01 => ultraChargeTime > 0f ? miniChargeTime / ultraChargeTime : 0f;
+        public float SuperCharge01 => ultraChargeTime > 0f ? superChargeTime / ultraChargeTime : 0f;
+        /// <summary>How much of the running boost is left, 1 just after release down to 0. 0 when not boosting.</summary>
+        public float BoostRemaining01 => boostTimer > 0f && activeBoostDuration > 0f ? Mathf.Clamp01(boostTimer / activeBoostDuration) : 0f;
         /// <summary>Raised the moment a drift is released with enough charge for a boost.</summary>
         public event System.Action<BoostTier> BoostStarted;
         /// <summary>
@@ -255,6 +262,7 @@ namespace CommodoreCircuit.Scooter
         private float driftCharge;
         private float boostTimer;
         private float boostTargetSpeed;
+        private float activeBoostDuration;
 
         private void Awake()
         {
@@ -344,12 +352,24 @@ namespace CommodoreCircuit.Scooter
 
         // A hazard landed: drop any drift boost and take its push. The slowdown
         // itself comes from RacerEffects.SpeedMultiplier in FixedUpdate.
+        //
+        // The push is turned sideways, so the scooter glances off and slides past
+        // the hazard on the side it hit, instead of bouncing straight back on a
+        // head-on hit or carrying on through it.
         private void OnHazardHit(HazardHit hit)
         {
             boostTimer = 0f;
             Vector3 push = hit.knockback;
             push.y = 0f;
-            knockbackVelocity = Vector3.ClampMagnitude(push, maxKnockbackSpeed);
+            float strength = Mathf.Min(push.magnitude, maxHazardPushSpeed);
+            if (strength < 0.01f) return;
+
+            Vector3 right = Quaternion.Euler(0f, headingYaw, 0f) * Vector3.right;
+            float side = Vector3.Dot(push, right);
+            // Nearly dead centre: go by which side of the hazard the scooter is on.
+            if (Mathf.Abs(side) < 0.1f * strength && hit.source != null)
+                side = Vector3.Dot(rb.position - hit.source.transform.position, right);
+            knockbackVelocity = right * (side < 0f ? -1f : 1f) * strength;
         }
 
         private void Start()
@@ -755,6 +775,7 @@ namespace CommodoreCircuit.Scooter
 
             boostTargetSpeed = maxSpeed + bonus;
             boostTimer = duration;
+            activeBoostDuration = duration;
             ActiveBoostTier = tier;
             BoostStarted?.Invoke(tier);
         }
