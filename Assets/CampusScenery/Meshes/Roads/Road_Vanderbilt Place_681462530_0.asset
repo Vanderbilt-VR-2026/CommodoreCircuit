@@ -15,7 +15,7 @@ Mesh:
     topology: 0
     baseVertex: 0
     firstVertex: 0
-    vertexCount: 12
+    vertexCount: 6
     localAABB:
       m_Center: {x: 0, y: 0.05, z: 0}
       m_Extent: {x: 57.08, y: 0, z: 36.65}
@@ -35,10 +35,10 @@ Mesh:
   m_KeepVertices: 1
   m_KeepIndices: 1
   m_IndexFormat: 0
-  m_IndexBuffer: 00000100020003000400050006000700080009000a000b00
+  m_IndexBuffer: 000001000200020001000300010004000300030004000500
   m_VertexData:
     serializedVersion: 3
-    m_VertexCount: 12
+    m_VertexCount: 6
     m_Channels:
     - stream: 0
       offset: 0
@@ -61,9 +61,9 @@ Mesh:
       format: 0
       dimension: 0
     - stream: 0
-      offset: 0
+      offset: 24
       format: 0
-      dimension: 0
+      dimension: 2
     - stream: 0
       offset: 0
       format: 0
@@ -96,8 +96,8 @@ Mesh:
       offset: 0
       format: 0
       dimension: 0
-    m_DataSize: 288
-    _typelessdata: ec516442cdcc4c3d295cf541000000000000803f0000000085ebd13ecdcc4c3d666676c0000000000000803f000000008fc25542cdcc4c3d9a991242000000000000803f000000008fc25542cdcc4c3d9a99124200000000ffff7f3f0000000085ebd13ecdcc4c3d666676c000000000ffff7f3f0000000052b84ec0cdcc4c3dec51084000000000ffff7f3f0000000085ebd13ecdcc4c3d666676c0000000000000803f000000008fc255c2cdcc4c3d9a9912c2000000000000803f0000000052b84ec0cdcc4c3dec510840000000000000803f0000000052b84ec0cdcc4c3dec510840000000000000803f000000008fc255c2cdcc4c3d9a9912c2000000000000803f00000000ec5164c2cdcc4c3d295cf5c1000000000000803f00000000
+    m_DataSize: 192
+    _typelessdata: ec516442cdcc4c3d295cf541000000000000803f000000000022803c530f803c85ebd13ecdcc4c3d666676c0000000000000803f0000000064bf033f0000803c8fc25542cdcc4c3d9a991242000000000000803f000000000000803c37d58b3d52b84ec0cdcc4c3dec51084000000000ffff7f3f0000000054be033f60d18b3d8fc255c2cdcc4c3d9a9912c2000000000000803f00000000d3217d3f5a0f803cec5164c2cdcc4c3d295cf5c1000000000000803f00000000c2207d3f37d58b3d
   m_CompressedMesh:
     m_Vertices:
       m_NumItems: 0

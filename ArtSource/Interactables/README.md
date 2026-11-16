@@ -30,7 +30,7 @@ About 9.8k triangles for all six together, which is light for Quest.
 3. Let Unity import. The postprocessor applies the correct import settings
    automatically (1 unit = 1 m, no embedded materials, point-filtered palette,
    icons as sprites).
-4. Run **Tools → Commodore Circuit → Build Interactable Prefabs**. Six prefabs
+4. Run **CommodoreCircuit → Interactables → Build Interactable Prefabs (keep existing)**. Six prefabs
    appear in `Assets/Prefabs/Interactables/`.
 5. On the player's scooter root (the object with the scooter's collider), add
    **`RacerEffects`**. In the scooter controller, multiply target speed by

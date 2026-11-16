@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using TMPro;
+using CommodoreCircuit.Audio;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
@@ -49,6 +50,7 @@ namespace CommodoreCircuit.Race.UI
 
         private void Awake()
         {
+            GameAudio.Route(audioSource, GameAudio.Channel.UI);
             if (finishClip == null) finishClip = RaceTones.Get(0.13f, 523f, 659f, 784f, 1047f);
             if (winClip == null) winClip = RaceTones.Get(0.11f, 784f, 988f, 1175f, 1568f, 1568f);
 

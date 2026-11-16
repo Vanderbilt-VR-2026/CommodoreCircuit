@@ -191,6 +191,7 @@ namespace CommodoreCircuit.EditorTools
 
         private static Mesh SaveMesh(Mesh m)
         {
+            LightmapUVs.Generate(m);
             string path = MeshDir + "/" + m.name + ".asset";
             Mesh existing = AssetDatabase.LoadAssetAtPath<Mesh>(path);
             if (existing != null)

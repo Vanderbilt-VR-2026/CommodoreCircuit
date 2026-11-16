@@ -11,9 +11,12 @@ EditorBuildSettings:
   - enabled: 0
     path: Assets/Scenes/Game Scene.unity
     guid: c9b7e9ef7edfe4f39bd92dba12763dee
-  - enabled: 1
+  - enabled: 0
     path: Assets/Scenes/Campus Track Scene.unity
     guid: e8fa1b2cdd0404e738e180b8afd2125c
+  - enabled: 1
+    path: Assets/Scenes/Alumni Lawn Scenery.unity
+    guid: 435ad7972e9374601bbf87da22df43e5
   - enabled: 0
     path: Assets/Lobby.unity
     guid: daf13f62c1b124d438997104e3a3f020

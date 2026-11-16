@@ -10,7 +10,7 @@ namespace CommodoreCircuit.Race
     /// A one-player race with no networking, for testing in Campus Track Scene (or in
     /// the editor with the keyboard). If a <see cref="NetworkRaceSession"/> comes online,
     /// or a Fusion runner is already running, this one steps aside, so the same scene
-    /// can hold both.
+    /// can hold both. Bots fill the rest of the grid, so solo you race Fill To - 1 of them.
     /// </summary>
     public class LocalRaceSession : MonoBehaviour, IRaceSession
     {
@@ -22,11 +22,13 @@ namespace CommodoreCircuit.Race
         [SerializeField, Min(1f)] private float countdownSeconds = 3f;
         [Tooltip("Wait this long for a network session before running solo.")]
         [SerializeField, Min(0f)] private float networkGraceSeconds = 1f;
+        [SerializeField] private BotSettings bots = new BotSettings();
 
         private RacePhase phase = RacePhase.Waiting;
         private float goTime = float.MaxValue;
         private float finishedAt = -1f;
         private bool active;
+        private readonly List<BotRacer> botRacers = new List<BotRacer>();
 
         public RacePhase Phase => phase;
         public int Laps => laps;
@@ -56,12 +58,38 @@ namespace CommodoreCircuit.Race
         {
             active = false;
             RaceSession.Unregister(this);
+            foreach (var bot in botRacers)
+                if (bot) Destroy(bot.gameObject);
+            botRacers.Clear();
         }
 
         private void BeginCountdown()
         {
             goTime = Time.time + getReadySeconds + countdownSeconds;
             phase = RacePhase.Countdown;
+            SpawnBots();
+        }
+
+        // You start on pole, the bots line up behind.
+        private void SpawnBots()
+        {
+            var track = RaceTrack.Instance;
+            int count = Mathf.Clamp(bots.fillTo - 1, 0, BotSettings.MaxBots);
+            if (count == 0 || track == null || !track.IsReady) return;
+
+            var me = RaceProgress.Local;
+            if (me && me.Scooter)
+            {
+                Pose pole = track.GridPose(0);
+                me.Scooter.Teleport(pole.position, pole.rotation);
+            }
+            for (int i = 0; i < count; i++)
+            {
+                var bot = BotRacer.Create(i, count, bots);
+                bot.Load(BotRacer.StartState(track.GridPose(i + 1), track));
+                bot.Driving = true;
+                botRacers.Add(bot);
+            }
         }
 
         private void Update()
@@ -106,6 +134,20 @@ namespace CommodoreCircuit.Race
                 CompletedLaps = me.CompletedLaps,
                 Distance = me.RaceDistance,
             });
+            foreach (var bot in botRacers)
+            {
+                if (!bot) continue;
+                into.Add(new RaceStanding
+                {
+                    DisplayName = bot.DisplayName,
+                    Color = bot.Color,
+                    Finished = bot.Finished,
+                    FinishTime = bot.FinishTime,
+                    BestLap = bot.BestLapTime,
+                    CompletedLaps = bot.CompletedLaps,
+                    Distance = bot.RaceDistance,
+                });
+            }
             RaceSession.Rank(into);
         }
 

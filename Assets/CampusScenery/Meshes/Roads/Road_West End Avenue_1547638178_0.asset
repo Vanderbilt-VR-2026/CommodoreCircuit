@@ -15,7 +15,7 @@ Mesh:
     topology: 0
     baseVertex: 0
     firstVertex: 0
-    vertexCount: 6
+    vertexCount: 4
     localAABB:
       m_Center: {x: 0, y: 0.05, z: 0}
       m_Extent: {x: 8.71, y: 0, z: 8.24}
@@ -24,8 +24,8 @@ Mesh:
     indexCount: 6
     topology: 0
     baseVertex: 0
-    firstVertex: 6
-    vertexCount: 6
+    firstVertex: 4
+    vertexCount: 4
     localAABB:
       m_Center: {x: 2.8899999, y: 0.06, z: 1.7249999}
       m_Extent: {x: 1.3299999, y: 0, z: 0.835}
@@ -45,10 +45,10 @@ Mesh:
   m_KeepVertices: 1
   m_KeepIndices: 1
   m_IndexFormat: 0
-  m_IndexBuffer: 00000100020003000400050006000700080009000a000b00
+  m_IndexBuffer: 000001000200020001000300040005000600040007000500
   m_VertexData:
     serializedVersion: 3
-    m_VertexCount: 12
+    m_VertexCount: 8
     m_Channels:
     - stream: 0
       offset: 0
@@ -71,9 +71,9 @@ Mesh:
       format: 0
       dimension: 0
     - stream: 0
-      offset: 0
+      offset: 24
       format: 0
-      dimension: 0
+      dimension: 2
     - stream: 0
       offset: 0
       format: 0
@@ -106,8 +106,8 @@ Mesh:
       offset: 0
       format: 0
       dimension: 0
-    m_DataSize: 288
-    _typelessdata: 295c0b41cdcc4c3d48e19abf00000000ffff7f3f00000000b81e45c0cdcc4c3d0ad703c100000000ffff7f3f00000000b81e4540cdcc4c3d0ad7034100000000ffff7f3f00000000b81e4540cdcc4c3d0ad7034100000000ffff7f3f00000000b81e45c0cdcc4c3d0ad703c100000000ffff7f3f00000000295c0bc1cdcc4c3d48e19a3f00000000ffff7f3f000000003d0a87408fc2753d48e11a40000000000000803f0000000014aec73f8fc2753d5c8f823f000000000000803f00000000e17a84408fc2753d0ad72340000000000000803f000000003d0a87408fc2753d48e11a4000000000ffff7f3f0000000085ebd13f8fc2753d0ad7633f00000000ffff7f3f0000000014aec73f8fc2753d5c8f823f00000000ffff7f3f00000000
+    m_DataSize: 256
+    _typelessdata: 295c0b41cdcc4c3d48e19abf00000000ffff7f3f000000003655823c0000803cb81e45c0cdcc4c3d0ad703c100000000ffff7f3f00000000d63c7a3f0000803cb81e4540cdcc4c3d0ad7034100000000ffff7f3f000000000000803c9d43493f295c0bc1cdcc4c3d48e19a3f00000000ffff7f3f000000002c2a7a3f9c43493f3d0a87408fc2753d48e11a40000000000000803f00000000d7c1813c9d434d3f14aec73f8fc2753d5c8f823f000000000000803f000000004288673ebd27503fe17a84408fc2753d0ad72340000000000000803f000000000000803cbd27503f85ebd13f8fc2753d0ad7633f00000000ffff7f3f000000005d62673e086b4d3f
   m_CompressedMesh:
     m_Vertices:
       m_NumItems: 0

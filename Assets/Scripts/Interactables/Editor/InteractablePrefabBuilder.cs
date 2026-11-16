@@ -8,7 +8,7 @@ using Object = UnityEngine.Object;
 namespace CommodoreCircuit.Interactables.EditorTools
 {
     /// <summary>
-    /// Tools > Commodore Circuit > Build Interactable Prefabs
+    /// CommodoreCircuit > Interactables > Build Interactable Prefabs
     ///
     /// Turns the six FBX models into ready-to-place prefabs: shared toon material,
     /// colliders, Rigidbody, gameplay scripts, default paths and tuning values.
@@ -17,7 +17,7 @@ namespace CommodoreCircuit.Interactables.EditorTools
     /// </summary>
     public static class InteractablePrefabBuilder
     {
-        const string Menu = "Tools/Commodore Circuit/";
+        const string Menu = "CommodoreCircuit/Interactables/";
 
         [MenuItem(Menu + "Build Interactable Prefabs (keep existing)")]
         static void BuildMissing() => Build(false);
@@ -45,6 +45,9 @@ namespace CommodoreCircuit.Interactables.EditorTools
             made += Make("SpeedCookie", overwrite, mat, (root, model) => Cookie(root, model));
             made += Make("MealSwipe", overwrite, mat, (root, model) => MealSwipe(root, model));
 
+            // Freshly built prefabs have no sounds; put them back.
+            InteractableSoundSetup.Apply();
+
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();
             Debug.Log($"[Commodore Circuit] Built {made} interactable prefab(s) in {InteractablePaths.Prefabs}.");
@@ -70,6 +73,7 @@ namespace CommodoreCircuit.Interactables.EditorTools
             var hazard = mover.AddComponent<Hazard>();
             hazard.slowDuration = 1f;
             hazard.slowMultiplier = 0.4f;
+            hazard.knockback = 3f;   // sideways glance-off push, m/s
             mover.AddComponent<SquirrelAnimator>().model = model.transform;
             Triggers(mover);
         }
@@ -95,7 +99,7 @@ namespace CommodoreCircuit.Interactables.EditorTools
             var hazard = mover.AddComponent<Hazard>();
             hazard.slowDuration = 2f;
             hazard.slowMultiplier = 0.25f;
-            hazard.knockback = 3f;
+            hazard.knockback = 4.5f;
             Triggers(mover);
         }
 
@@ -134,6 +138,7 @@ namespace CommodoreCircuit.Interactables.EditorTools
             var hazard = mover.AddComponent<Hazard>();
             hazard.slowDuration = 0.5f;
             hazard.slowMultiplier = 0.6f;
+            hazard.knockback = 2.5f;   // sideways glance-off push, m/s
             Triggers(mover);
         }
 
@@ -157,6 +162,7 @@ namespace CommodoreCircuit.Interactables.EditorTools
             var hazard = mover.AddComponent<Hazard>();
             hazard.slowDuration = 1f;
             hazard.slowMultiplier = 0.4f;
+            hazard.knockback = 4f;   // sideways glance-off push, m/s
             hazard.rehitCooldown = 3f;
             mover.AddComponent<FreshmanAnimator>().model = model.transform;
             Triggers(mover);
