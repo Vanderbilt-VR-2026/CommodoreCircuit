@@ -19,7 +19,8 @@ namespace CommodoreCircuit.EditorTools
     ///     as a hint that this is a way through,
     ///   - invisible walls down both sides (the buildings have no colliders of their own),
     ///   - openings in the lap's left barrier where the shortcut leaves and rejoins,
-    ///   - a passage cut through each building (BuildingTunnel),
+    ///   - a passage cut through each building (BuildingTunnel), wider on the left along the
+    ///     concourse for the booth aisle,
     ///   - a TrackShortcut, so laps, positions and the wrong-way warning work through it,
     ///   - the inside of Sarratt and Rand (RandInteriorBuilder).
     ///
@@ -97,10 +98,11 @@ namespace CommodoreCircuit.EditorTools
             // Openings in the lap's left barrier (the shortcut leaves and rejoins on that side).
             int openings = OpenLapBarrier(center, m.wallOffset);
 
-            // Passages through the buildings.
+            // Passages through the buildings, wider on the left where the booth aisle is.
+            float[] aisle = RandInteriorBuilder.ExtraLeftWidths(data.centerline);
             var cut = new List<string>();
             foreach (string building in data.buildings)
-                if (BuildingTunnel.Cut(building, center, left, m.tunnelHalfWidth, m.tunnelHeight, MeshDir, closed: false))
+                if (BuildingTunnel.Cut(building, center, left, m.tunnelHalfWidth, m.tunnelHeight, MeshDir, closed: false, extraLeft: aisle))
                     cut.Add(building);
 
             // The buildings may be imported models (CampusModelSwapper) instead of gray boxes.
@@ -157,7 +159,7 @@ namespace CommodoreCircuit.EditorTools
             {
                 GameObject model = GameObject.Find(building + ModelSuffix);
                 if (model != null && BuildingTunnel.CutModel(model, center, left, data.meta.tunnelHalfWidth,
-                        data.meta.tunnelHeight, ModelTunnelDir, closed: false))
+                        data.meta.tunnelHeight, ModelTunnelDir, closed: false, extraLeft: RandInteriorBuilder.ExtraLeftWidths(data.centerline)))
                     cut.Add(building);
             }
             if (cut.Count == 0) return "Shortcut passage: no building models on the shortcut in this scene.";
