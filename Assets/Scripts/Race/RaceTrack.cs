@@ -170,6 +170,27 @@ namespace CommodoreCircuit.Race
             };
         }
 
+        /// <summary>
+        /// Like <see cref="Project"/>, but a racer off the main road and on a <see cref="TrackShortcut"/>
+        /// gets the shortcut's progress and direction instead. Segment comes back as -1 then, so the
+        /// next call searches the whole lap and picks up the right spot where the shortcut rejoins.
+        /// </summary>
+        public TrackPoint ProjectWithShortcuts(Vector3 world, int hint = -1)
+        {
+            TrackPoint here = Project(world, hint);
+            if (!IsReady || Mathf.Abs(here.Lateral) <= here.HalfWidth) return here;
+
+            foreach (TrackShortcut shortcut in TrackShortcut.All)
+            {
+                if (!shortcut.TryProject(this, world, out float distance, out Vector3 forward)) continue;
+                here.Distance = distance;
+                here.Forward = forward;
+                here.Segment = -1;
+                return here;
+            }
+            return here;
+        }
+
         /// <summary>World position on the centerline at <paramref name="distance"/> metres from the start.</summary>
         public Vector3 PositionAt(float distance)
         {

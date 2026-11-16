@@ -95,7 +95,15 @@ namespace CommodoreCircuit.Race
             transform.SetPositionAndRotation(scooter.position, scooter.rotation);
 
             Camera eyes = Camera.main;
-            if (head && eyes) head.SetPositionAndRotation(eyes.transform.position, eyes.transform.rotation);
+            if (head && eyes)
+            {
+                // In third-person view the camera floats behind the scooter, so show the rider
+                // sitting on it instead of wherever the camera happens to be.
+                if (me.Scooter && me.Scooter.ThirdPersonControls)
+                    head.SetPositionAndRotation(scooter.TransformPoint(0f, me.Scooter.RiderEyeHeight, 0f), scooter.rotation);
+                else
+                    head.SetPositionAndRotation(eyes.transform.position, eyes.transform.rotation);
+            }
         }
     }
 }

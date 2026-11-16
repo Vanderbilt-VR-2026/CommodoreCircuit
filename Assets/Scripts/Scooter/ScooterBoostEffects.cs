@@ -40,6 +40,10 @@ namespace CommodoreCircuit.Scooter
         [SerializeField] private Color superColor = new Color(1f, 0.55f, 0.1f);
         [SerializeField] private Color ultraColor = new Color(0.78f, 0.35f, 1f);
 
+        // Bots copy these so their sparks and flame match the player's (BotRacerEffects).
+        public ParticleSystem DriftSparks => driftSparks;
+        public ParticleSystem BoostFlame => boostFlame;
+
         private ScooterController.BoostTier shownSparkTier = (ScooterController.BoostTier)(-1);
         private ScooterController.BoostTier shownFlameTier = (ScooterController.BoostTier)(-1);
 

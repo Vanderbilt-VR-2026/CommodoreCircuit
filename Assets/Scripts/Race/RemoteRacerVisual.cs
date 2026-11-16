@@ -92,7 +92,7 @@ namespace CommodoreCircuit.Race
             for (; t && t != scooter; t = t.parent)
             {
                 if (t.GetComponent<Camera>() || t.GetComponent<Canvas>() || t.GetComponent<ScooterHandlebar>()) return true;
-                if (t.name == "VRRig" || t.name.EndsWith("HandAnchor")) return true;
+                if (t.name == "VRRig" || t.name.EndsWith("HandAnchor") || t.name == "Third Person Rider") return true;
             }
             return false;
         }

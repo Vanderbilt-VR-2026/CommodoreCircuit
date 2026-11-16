@@ -216,6 +216,7 @@ namespace CommodoreCircuit.EditorTools
                 m.RecalculateNormals();
             }
             m.RecalculateBounds();
+            LightmapUVs.Generate(m);
             AssetDatabase.CreateAsset(m, MeshDir + "/" + name + ".asset");
             return m;
         }
