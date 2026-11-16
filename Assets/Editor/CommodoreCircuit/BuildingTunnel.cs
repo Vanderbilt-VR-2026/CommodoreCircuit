@@ -14,6 +14,8 @@ namespace CommodoreCircuit.EditorTools
     /// The original mesh asset is never changed; the result is saved as a new asset.
     /// The path is the closed lap by default; pass closed = false for an open path
     /// such as a shortcut, so its last point isn't joined back to its first.
+    /// extraLeft (optional, one value per path point) widens the passage on the left of travel
+    /// only, for a room off to one side such as the booth aisle in Rand.
     ///
     /// <see cref="CutModel"/> does the same for an imported building model (the FBX buildings
     /// CampusModelSwapper puts in place of the gray boxes), whose meshes aren't Y-up or may be
@@ -26,7 +28,7 @@ namespace CommodoreCircuit.EditorTools
         private struct V { public Vector3 p; public Vector2 uv; }
         private struct Pl { public Vector3 n; public float d; public float Dist(Vector3 p) => Vector3.Dot(n, p) - d; }
 
-        public static bool Cut(string buildingName, Vector3[] center, Vector3[] left, float halfWidth, float height, string saveDir, bool closed = true)
+        public static bool Cut(string buildingName, Vector3[] center, Vector3[] left, float halfWidth, float height, string saveDir, bool closed = true, float[] extraLeft = null)
         {
             GameObject go = GameObject.Find(buildingName);
             if (go == null) { Debug.Log($"Tunnel: '{buildingName}' not in this scene, skipped."); return false; }
@@ -48,10 +50,11 @@ namespace CommodoreCircuit.EditorTools
             {
                 int j = (i + 1) % n;
                 Vector3 dir = (center[j] - center[i]).normalized * 0.1f; // tiny overlap, no slivers
+                float li = halfWidth + Extra(extraLeft, i), lj = halfWidth + Extra(extraLeft, j);
                 Vector3[] q =
                 {
-                    t.InverseTransformPoint(center[i] - dir + left[i] * halfWidth),
-                    t.InverseTransformPoint(center[j] + dir + left[j] * halfWidth),
+                    t.InverseTransformPoint(center[i] - dir + left[i] * li),
+                    t.InverseTransformPoint(center[j] + dir + left[j] * lj),
                     t.InverseTransformPoint(center[j] + dir - left[j] * halfWidth),
                     t.InverseTransformPoint(center[i] - dir - left[i] * halfWidth),
                 };
@@ -157,7 +160,7 @@ namespace CommodoreCircuit.EditorTools
         /// Cuts the passage through every mesh of an imported building model. Always starts from
         /// the meshes in the model's prefab, so re-running is safe. Results are saved in saveDir.
         /// </summary>
-        public static bool CutModel(GameObject model, Vector3[] center, Vector3[] left, float halfWidth, float height, string saveDir, bool closed = true)
+        public static bool CutModel(GameObject model, Vector3[] center, Vector3[] left, float halfWidth, float height, string saveDir, bool closed = true, float[] extraLeft = null)
         {
             Renderer[] renderers = model.GetComponentsInChildren<Renderer>(true);
             if (renderers.Length == 0) return false;
@@ -169,14 +172,14 @@ namespace CommodoreCircuit.EditorTools
             foreach (MeshFilter mf in model.GetComponentsInChildren<MeshFilter>(true))
             {
                 string name = model.name.Replace(" (Model)", "").Replace(' ', '_') + (part++ > 0 ? "_" + part : "");
-                if (CutWorld(mf, name, center, left, halfWidth, ground, ground + height, saveDir, closed)) cut = true;
+                if (CutWorld(mf, name, center, left, halfWidth, ground, ground + height, saveDir, closed, extraLeft)) cut = true;
             }
             if (!cut) Debug.Log($"Tunnel: track does not cross '{model.name}'.");
             return cut;
         }
 
         private static bool CutWorld(MeshFilter mf, string name, Vector3[] center, Vector3[] left, float halfWidth,
-            float ground, float top, string saveDir, bool closed)
+            float ground, float top, string saveDir, bool closed, float[] extraLeft)
         {
             // The prefab's mesh, not one we cut earlier.
             MeshFilter original = PrefabUtility.GetCorrespondingObjectFromOriginalSource(mf);
@@ -200,10 +203,11 @@ namespace CommodoreCircuit.EditorTools
             {
                 int j = (i + 1) % n;
                 Vector3 dir = (center[j] - center[i]).normalized * 0.1f;
+                float li = halfWidth + Extra(extraLeft, i), lj = halfWidth + Extra(extraLeft, j);
                 Vector3[] q =
                 {
-                    center[i] - dir + left[i] * halfWidth,
-                    center[j] + dir + left[j] * halfWidth,
+                    center[i] - dir + left[i] * li,
+                    center[j] + dir + left[j] * lj,
                     center[j] + dir - left[j] * halfWidth,
                     center[i] - dir - left[i] * halfWidth,
                 };
@@ -311,6 +315,8 @@ namespace CommodoreCircuit.EditorTools
         }
 
         // Planes of the corridor prism; normals point OUT of the volume.
+        private static float Extra(float[] extraLeft, int i) => extraLeft != null && i < extraLeft.Length ? extraLeft[i] : 0f;
+
         private static Pl[] PrismPlanes(Vector3[] q, float height, float floor = -5f)
         {
             Vector3 c = (q[0] + q[1] + q[2] + q[3]) * 0.25f;
