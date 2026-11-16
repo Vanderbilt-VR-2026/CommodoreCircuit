@@ -4,7 +4,7 @@
 
 Players meet in a VR classroom, join a lobby with a code, and race scooters around campus together.
 
-> This branch is a snapshot of the project at the end of **Sprint 3**. See the [`main`](https://github.com/Vanderbilt-VR-2026/CommodoreCircuit/tree/main) branch for the latest version and the full sprint history.
+> This branch is a snapshot of the project at the end of **Sprint 4**. See the [`main`](https://github.com/Vanderbilt-VR-2026/CommodoreCircuit/tree/main) branch for the latest version and the full sprint history.
 
 ---
 
@@ -15,6 +15,8 @@ Players meet in a VR classroom, join a lobby with a code, and race scooters arou
 - [How to Test](#how-to-test)
 - [Sprint 3 (due October 29)](#sprint-3-due-october-29)
 - [Sprint 4 Plan](#sprint-4-plan)
+- [Sprint 4](#sprint-4)
+- [Sprint 5 Plan (Final Sprint)](#sprint-5-plan-final-sprint)
 
 ---
 
@@ -64,8 +66,8 @@ If the handlebar ends up in the wrong spot, click either thumbstick to move it b
 
 ## How to Test
 
-1. Download the Sprint 3 APK: [Sprint3.apk](https://vanderbilt365-my.sharepoint.com/:u:/g/personal/knathifa_l_cambridge_vanderbilt_edu/IQBRHyFSq0KRSpR0ESV4i9lJAVYfbUA9kErN1oVZf6L5hQU?e=WIBSlU) (Vanderbilt OneDrive)
-2. Install it on a Quest with SideQuest or Meta Quest Developer Hub, or run `adb install Sprint3.apk`
+1. Download the Sprint 4 APK: [Sprint4.apk](https://drive.google.com/file/d/1f5XJCVEOq1ODQ6pK6amxEAcwwCYU1sdc/view?usp=sharing) (Google Drive)
+2. Install it on a Quest with SideQuest or Meta Quest Developer Hub, or run `adb install Sprint4.apk`
 3. Open **Commodore Circuit** from Unknown Sources in your Quest library
 4. In the classroom, point the right controller at the chalkboard and pull the trigger on **Create Lobby**
 5. On a second headset, choose **Join Lobby** and enter the 4-character code shown on the board. Both players appear in the classroom.
@@ -209,3 +211,42 @@ _Sprint 3 video (coming soon)_ · [Sprint 3 APK](https://vanderbilt365-my.sharep
 | Alex Pearle        | Move Grayson's timer, lap count, and other race info onto the scooter for a diegetic experience                                                                    |
 | Grayson Smith      | Add a map that shows each player's position on campus. It may be non-diegetic at first; we'll decide as a team.                                                    |
 | Ty Levine          | Upload soundtracks to the shared OneDrive and add music to the game; Sprint 4 video                                                                                |
+
+---
+
+## Sprint 4
+
+[Sprint 4 video](https://drive.google.com/file/d/1iij6EhQkojKoifGYuUgOZOwCEcjNslBr/view?usp=sharing) · [Sprint 4 APK](https://drive.google.com/file/d/1f5XJCVEOq1ODQ6pK6amxEAcwwCYU1sdc/view?usp=sharing)
+
+### Sprint 4: Who Did What
+
+| Member             | Sprint 4 Contributions                                                                                                                                      |
+| ------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Ty Levine          | Sound effects from the sound library; managed Sprint 4; Sprint 4 video                                                                                      |
+| Joshua Jung        | Rand interior; music and sound effects; AI racers to fill out the race                                                                                      |
+| Grayson Smith      | Power-ups; animated obstacles                                                                                                                               |
+| Alex Pearle        | Comfort vignette with Off / Low / High settings in the pause menu; less tilt when turning and drifting; snap turning in the lobby instead of smooth turning |
+| Knathifa Cambridge | Building exteriors such as Tollman and Rand                                                                                                                 |
+
+---
+
+## Sprint 5 Plan (Final Sprint)
+
+### Sprint 5 Goals
+
+- Add characters, scooter skins, and scooter models that each handle differently
+- Let players collide with each other and throw frisbees at each other
+- Show speed and race info on the scooter, plus a live map of the track
+- Finish the Rand interior and bring more campus building exteriors into the main track
+- Fill out the classroom lobby with displays and show each player's name
+- Make the final Sprint 5 video
+
+| Member             | Sprint 5 Plan                                                                                                                                                                                                                          |
+| ------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Ty Levine          | Final video for Sprint 5                                                                                                                                                                                                               |
+| Joshua Jung        | Scooter collisions between players; more sound effects; classroom displays (scooters racing on the TV, vending machine); finish the Rand interior; show each player's name                                                             |
+| Grayson Smith      | Animate the interactables and add construction borders; frisbee throwing so players can hit each other; more campus-specific building designs                                                                                          |
+| Alex Pearle        | Characters and scooter skins; scooter models with different speed, acceleration, weight, and steering; speed (mph) and race info on the handlebar; pick all of this from the classroom whiteboards; a live map on the track or scooter |
+| Knathifa Cambridge | Design building exteriors and import them into the main track                                                                                                                                                                          |
+
+**If anyone has time:** replace the regular track floor with a Vanderbilt-specific floor, and let racers who have finished watch the others as a ghost.
